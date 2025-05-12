@@ -1,0 +1,357 @@
+# 组件 API
+
+本文档介绍了组件系统的核心 API，包括组件的导入、属性声明、事件管理等，帮助开发者更高效地构建和管理自定义组件。
+
+## `import!`
+
+`import!` 宏用于引入自定义组件，使其可以在当前作用域内使用。
+
+### 用法
+
+```rust
+import! {
+    crate::moudle::to::component;
+}
+```
+
+### 示例
+
+在结构中使用 `import!` 引入 Rust 组件：
+
+```html
+<template>
+    <component name="MyView2">
+        <Header></Header>
+        <MyView1></MyView1>
+    </component>
+</template>
+
+<script>
+import! {
+    crate::views::my_view1::*;
+    crate::components::header::*;
+}
+</script>
+```
+
+## `#[component]`
+
+对于自定义组件，我们需要使用`#[component]`宏进行组件的属性声明，但并不是所有的类型都是允许的，能够在属性中使用的类型需要实现`Default`trait，
+自定义struct和enum则需要使用`#[prop]`进行标注。
+
+```rust
+<script>
+#[component]
+pub struct MyView{
+    name: String
+}
+</script>
+```
+
+## `#[prop]`
+
+`#[prop]` 宏用于定义组件的属性（Props）。我们需要使用 `#[prop]` 宏来声明属性，以便实例化组件时进行赋值。
+
+### 限制
+
+**不是所有的类型都可以作为 `prop` 使用，只有实现了 `Default` trait 的类型才能用于属性声明。**
+
+### 示例
+
+```rust
+<script>
+#[component]
+pub struct MyView{
+    user: User,
+    auth: Auth
+}
+
+#[prop]
+#[derive(Debug, Clone)]
+pub struct User{
+    name: String
+}
+
+impl Default for User{
+    fn default() -> Self{
+        Self{ name: "John" }
+    }
+}
+
+#[prop]
+#[derive(Default, Clone, Copy, Debug)]
+pub enum Auth{
+    #[default]
+    Custom,
+    User,
+    Remote,
+    Other
+}
+</script>
+```
+
+### `get|set` 方法
+
+所有组件内声明的并在模版中进行绑定的属性都会自动生成对应的 `get` 和 `set` 方法。请使用 `get|set` 方法来访问和修改属性值，否则会导致双向绑定失效。
+
+例如，上述 `MyView` 结构体会自动生成以下方法：
+
+- `fn get_user(&self) -> User;`
+- `fn set_user(&mut self, value: User) -> ();`
+- `fn get_auth(&self) -> Auth;`
+- `fn set_auth(&self, value: Auth) -> ();`
+
+## `Default trait`
+
+`Default` trait 用于初始化组件实例的属性值。
+
+### 示例
+
+```rust {7-11}
+<script>
+#[component]
+pub struct MyView {
+    name: String,
+}
+
+impl Default for MyView{
+    fn default() -> Self{
+        Self{
+            name: "John".to_string(),
+        }
+    }
+}
+</script>
+```
+
+在后续的代码中，您可以像实现impl一样实现组件方法和回调函数，例如：
+
+```rust
+impl MyView{
+    fn click_btn(&mut self) -> (){
+        let name = self.get_name();
+        self.set_name("Alice".to_string());
+    }
+}
+```
+
+## `#[event]`
+
+自定义组件默认情况下不会触发任何事件，若要使用事件系统，需要使用 `#[event]` 宏进行事件声明。
+
+### 要求
+
+- 事件必须使用 `#[event]` 进行标记。
+- 事件类型必须派生 `Debug` 和 `Clone` trait。
+
+### 示例
+
+```rust
+#[event]
+#[derive(Debug, Clone)]
+pub enum MyViewEvent {
+    Clicked,
+    Changed(String),
+}
+```
+
+在上述示例中，我们定义了 `MyViewEvent` 事件类型，其中：
+
+1. `Clicked`：无参数的点击事件。
+2. `Changed(String)`：携带 `String` 参数的变更事件。
+
+
+## `c_ref!`
+
+`c_ref!` 宏用于根据组件 `id` 获取组件引用，便于直接操作组件实例的引用。
+
+### 示例
+
+```html
+<template>
+    <component name="MyView">
+        <label id="my_label" text="'Hello'"></label>
+        <button id="my_btn" @clicked="get_label_text()">
+            <label as_prop="slot" text="'get my label text'"></label>
+        </button>
+    </component>
+</template>
+
+<script>
+#[component]
+struct MyView{}
+
+impl MyView{
+    fn get_label_text(&mut self) {
+        let label = c_ref!(my_label);
+        let label_text = label.get_text();
+        println!("label text is: {}", label_text);
+    }
+}
+</script>
+```
+
+## `active!`
+
+`active!` 宏用于触发组件内部定义的事件，并将其传递给外部组件进行回调处理。
+
+### 示例
+
+#### 组件 `MyView`
+
+```rust
+#[event]
+#[derive(Debug, Clone)]
+pub enum MyViewEvent {
+    Clicked,
+    Changed(String),
+}
+
+impl MyView{
+    fn click_view(&self) {
+        let _ = active!(MyViewEvent::Clicked);
+    }
+
+    fn change_view(&self) {
+        active!(MyViewEvent::Changed, "changed!".to_string());
+    }
+}
+```
+
+#### 组件 `FatherView`
+
+`FatherView` 组件监听 `MyView` 的事件：
+
+```html
+<template>
+    <component name="FatherView">
+        <MyView 
+            @clicked="my_view_clicked()" 
+            @changed="my_view_changed()">
+        </MyView>
+    </component>
+</template>
+
+<script>
+#[component]
+struct FatherView{}
+
+impl FatherView{
+    fn my_view_clicked(&self) {
+        dbg!("my_view_clicked!");
+    }
+
+    fn my_view_changed(&self, param: impl EventParam) {
+        dbg!(param);
+    }
+}
+</script>
+```
+
+## `#[computed]`
+
+计算属性（Computed Property）是基于现有属性动态计算出的值，在 GenUI 中，计算属性不会存储状态，而是根据其依赖项的变化自动更新。
+
+| 特性           | 计算属性 (Computed)         | 双向绑定 (Two-way Binding) |
+| ------------- | -------------------------- | ------------------------- |
+| 是否存储状态    | ❌ 否                      | ✅ 是                     |
+| 是否可变       | ✅ 依赖项变化时更新           | ✅ 是                     |
+| 是否可手动修改  | ✅ 但不能使用 set_xxx 方法    | ✅ 通过 set_xxx 修改       |
+| 依赖数据       | ✅ 需要依赖项                | ✅ 组件状态                |
+
+### 用法
+
+1. `#[computed]`需要被声明在方法上
+2. `#[computed]`依赖于组件中声明的字段，可以是多个
+3. 计算属性的返回值需要和组件绑定一致
+4. 计算属性相当于将对值的处理交给开发者，所以在计算属性的方法中不可以使用`set_xxx()`对组件字段进行更改，取而代之的是更灵活的赋值更改
+
+```rust
+impl Hello{
+    #[computed([$(arg)*])]
+    fn $computed_fn($[&self|&mut self]?) -> $return_value_type{
+        // ...
+    }   
+}
+```
+
+> - `$(arg)*`: 依赖参数列表, 表示可以有一个或多个
+> - `$computed_fn`: 计算属性处理函数
+> - `$[&self|&mut self]?`: 表示可以是`&self`或`&mut self`这由您来决定
+> - `$return_value_type`: 返回值类型
+
+
+### 示例
+
+计算属性的写法为在属性绑定时使用方法进行声明:
+
+```html
+<template>
+    <component name="Hello" class="hello_view" spacing="12.0">
+        <label :text="fmt_count()"></label>
+    </component>
+</template>
+
+<script>
+#[component]
+pub struct Hello{
+    count: u32,
+}
+
+impl Hello{
+    #[computed([count])]
+    fn fmt_count(&self) -> String{
+        format!("count: {}", self.count)
+    }   
+}
+</script>
+```
+
+## `nav_to!`
+
+用于从路由管理的子页面中跳转至其他子页面中。
+
+### 用法
+
+```rust
+nav_to!($page_id);
+```
+
+> - `$page_id`: 页面id
+
+```toml title="router.toml"
+[bar_pages]
+login = { path = "crate::views::login::*", component = "Login" }
+```
+
+在`router.toml`中配置的login这个key就是页面id
+
+### 示例
+
+```rust
+impl Hello{
+    pub fn to_register(&mut self) {
+        nav_to!(register);
+    }
+}
+```
+
+## `nav_back!`
+
+通过压栈的方式让路由返回上一个页面，如果有的话。
+
+### 用法
+
+```rust
+nav_back!();
+```
+
+### 示例
+
+```
+impl Hello{
+    pub fn back(&mut self) {
+        nav_back!();
+    }
+}
+```

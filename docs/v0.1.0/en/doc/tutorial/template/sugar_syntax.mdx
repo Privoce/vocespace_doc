@@ -1,0 +1,97 @@
+import { Badge } from '@theme';
+
+# Syntax Sugar
+
+This doc describes the use of built-in component prop syntax sugar in GenUI
+
+## `For`
+
+`for` syntax sugar allows users to quickly build iterable component templates through the passed iterator
+
+### Syntax
+
+```html
+<label :for="($($index)?, $item) in $iter_ident"></label>
+```
+
+The followings are details:
+
+1. `:for="($index, $item) in $iter_ident"`
+2. `:for="$item in $iter_ident"`
+3. `:for="($index, ($item1, $item2, ...)) in $iter_ident"`
+4. `:for="($index, ()) in $iter_ident"`
+5. `:for="($index, _) in $iter_ident"`
+
+> - `$index`: index
+> - `$item`: iterator element
+> - `$iter_ident`: iterator ident
+
+### Examples
+
+#### Single for
+
+```html
+<label id="mv_label" :for="item in label_list" :text="item"></label>
+```
+
+#### Nested use
+
+```html
+<view id="my_view" :for="item in label_list">
+    <label id="mv_label" :text="item"></label>
+</view>
+```
+
+#### Nested for
+
+```html
+<view id="mv_view" :for="(index, item) in label_list">
+    <label id="mv_label" :for="item1 in item[index]" :text="item1"></label>
+</view>
+```
+
+## `If_ElseIf_Else`
+
+The `if_else` syntax sugar allows users to conditionally render components. The component will only be rendered if the expression returns `true`.
+
+### Syntax
+
+```html
+<label :if="$if_bind_condition"></label>
+$($(<label :else_if="$else_if_bind_condition"></label>)*)?
+$(<label else></label>)?
+```
+
+> - `$if_bind_condition`: if conditional statement condition
+> - `$else_if_bind_condition`: else_if conditional statement condition
+> - `$()*`: many1, 1 or more
+> - `$()?`: recognize, 0 or 1
+
+> [!NOTE]
+>
+> Among them, `$($(<label :else_if="$else_if_bind_condition"></label>)*)?` means that `else_if` can be present or absent, and if present, it can be multiple
+
+### Example
+
+For specific writing and examples, see: [if_sugar tests](https://github.com/Privoce/made_with_GenUI/tree/main/tests/if_sugar/views)
+
+#### Only if
+
+```html
+<label :if="vis" text="'hello'"></label>
+```
+
+#### if else
+
+```html
+<label :if="vis" text="'hello'"></label>
+<label else text="'world'"></label>
+```
+
+#### if else_if else
+
+```html
+<label :if="is_a()" text="'Vis A'"></label>
+<label :else_if="is_b()" text="'Vis B'"></label>
+<label else text="'world'"></label>
+```

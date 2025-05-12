@@ -1,0 +1,353 @@
+# Component API
+
+This document introduces the core API of the component system, including component import, property declaration, event management, etc., to help developers build and manage custom components more efficiently.
+
+## `import!`
+
+The `import!` macro is used to import custom components so that they can be used in the current scope.
+
+### Usage
+
+```rust
+import! {
+    crate::moudle::to::component;
+}
+```
+
+### Example
+
+Import Rust components into your structure using `import!`:
+
+```html
+<template>
+    <component name="MyView2">
+        <Header></Header>
+        <MyView1></MyView1>
+    </component>
+</template>
+
+<script>
+import! {
+    crate::views::my_view1::*;
+    crate::components::header::*;
+}
+</script>
+```
+
+## `#[component]`
+
+For custom components, we need to use the `#[component]` macro to declare the component's properties, but not all types are allowed. Types that can be used in properties need to implement the `Default` trait, and custom structs and enums need to be annotated with `#[prop]`.
+
+```rust
+<script>
+#[component]
+pub struct MyView{
+    name: String
+}
+</script>
+```
+
+## `#[prop]`
+
+The `#[prop]` macro is used to define the properties (Props) of a component. We need to use the `#[prop]` macro to declare properties so that they can be assigned when the component is instantiated.
+### Limitations
+
+**Not all types can be used as `prop`. Only types that implement the `Default` trait can be used for property declaration.**
+
+### Example
+
+```rust
+<script>
+#[component]
+pub struct MyView{
+    user: User,
+    auth: Auth
+}
+
+#[prop]
+#[derive(Debug, Clone)]
+pub struct User{
+    name: String
+}
+
+impl Default for User{
+    fn default() -> Self{
+        Self{ name: "John" }
+    }
+}
+
+#[prop]
+#[derive(Default, Clone, Copy, Debug)]
+pub enum Auth{
+    #[default]
+    Custom,
+    User,
+    Remote,
+    Other
+}
+</script>
+```
+
+### `get|set` method
+
+All properties declared in components and bound in templates will automatically generate corresponding `get` and `set` methods. Please use the `get|set` methods to access and modify property values, otherwise the two-way binding will fail.
+
+For example, the above `MyView` structure will automatically generate the following methods:
+
+- `fn get_user(&self) -> User;`
+- `fn set_user(&mut self, value: User) -> ();`
+- `fn get_auth(&self) -> Auth;`
+- `fn set_auth(&self, value: Auth) -> ();`
+
+## `Default trait`
+
+The `Default` trait is used to initialize the property values ​​of a component instance.
+
+### Example
+
+```rust {7-11}
+<script>
+#[component]
+pub struct MyView {
+    name: String,
+}
+
+impl Default for MyView{
+    fn default() -> Self{
+        Self{
+            name: "John".to_string(),
+        }
+    }
+}
+</script>
+```
+
+In subsequent code, you can implement component methods and callback functions just like implementing impl, for example:
+
+```rust
+impl MyView{
+    fn click_btn(&mut self) -> (){
+        let name = self.get_name();
+        self.set_name("Alice".to_string());
+    }
+}
+```
+
+## `#[event]`
+
+Custom components do not trigger any events by default. To use the event system, you need to use the `#[event]` macro to declare events.
+
+### Addention
+
+- Events must be marked with `#[event]`.
+- Event types must derive from the `Debug` and `Clone` traits.
+
+### Example
+
+```rust
+#[event]
+#[derive(Debug, Clone)]
+pub enum MyViewEvent {
+    Clicked,
+    Changed(String),
+}
+```
+
+In the above example, we define the `MyViewEvent` event type, where:
+
+1. `Clicked`: a click event without parameters.
+2. `Changed(String)`: a change event with a `String` parameter.
+
+## `c_ref!`
+
+The `c_ref!` macro is used to obtain a component reference based on the component `id`, making it easier to directly manipulate the reference of a component instance.
+
+### Example
+
+```html
+<template>
+    <component name="MyView">
+        <label id="my_label" text="'Hello'"></label>
+        <button id="my_btn" @clicked="get_label_text()">
+            <label as_prop="slot" text="'get my label text'"></label>
+        </button>
+    </component>
+</template>
+
+<script>
+#[component]
+struct MyView{}
+
+impl MyView{
+    fn get_label_text(&mut self) {
+        let label = c_ref!(my_label);
+        let label_text = label.get_text();
+        println!("label text is: {}", label_text);
+    }
+}
+</script>
+```
+
+## `active!`
+
+The `active!` macro is used to trigger an event defined inside a component and pass it to an external component for callback processing.
+
+### Example
+
+#### `MyView` Component
+
+```rust
+#[event]
+#[derive(Debug, Clone)]
+pub enum MyViewEvent {
+    Clicked,
+    Changed(String),
+}
+
+impl MyView{
+    fn click_view(&self) {
+        let _ = active!(MyViewEvent::Clicked);
+    }
+
+    fn change_view(&self) {
+        active!(MyViewEvent::Changed, "changed!".to_string());
+    }
+}
+```
+
+#### `FatherView` Component
+
+The `FatherView` component listens to the events of `MyView`:
+
+```html
+<template>
+    <component name="FatherView">
+        <MyView 
+            @clicked="my_view_clicked()" 
+            @changed="my_view_changed()">
+        </MyView>
+    </component>
+</template>
+
+<script>
+#[component]
+struct FatherView{}
+
+impl FatherView{
+    fn my_view_clicked(&self) {
+        dbg!("my_view_clicked!");
+    }
+
+    fn my_view_changed(&self, param: impl EventParam) {
+        dbg!(param);
+    }
+}
+</script>
+```
+
+## `#[computed]`
+
+Computed properties are values ​​dynamically calculated based on existing properties. In GenUI, computed properties do not store state, but are automatically updated based on changes in their dependencies.
+
+| Features           | Computed                           | Two-way Binding       |
+| ------------------ | ---------------------------------- | --------------------- |
+| Store state?       | ❌ No                              | ✅ Yes                |
+| Mutable?           | ✅ Update when dependencies change | ✅ Yes                |
+| Manually editable? | ✅ But cannot use set_xxx method   | ✅ Modify via set_xxx |
+| Dependent data     | ✅ Requires dependencies           | ✅ Component state    |
+
+### Usage
+
+1. `#[computed]` needs to be declared in the method
+2. `#[computed]` depends on the fields declared in the component, which can be multiple
+3. The return value of the calculated property needs to be consistent with the component binding
+4. The calculated property is equivalent to handing over the value processing to the developer, so `set_xxx()` cannot be used in the calculated property method to change the component field. Instead, a more flexible assignment change is used
+
+```rust
+impl Hello{
+    #[computed([$(arg)*])]
+    fn $computed_fn($[&self|&mut self]?) -> $return_value_type{
+        // ...
+    }   
+}
+```
+
+> - `$(arg)*`: Depends on the parameter list, indicating that there can be one or more
+> - `$computed_fn`: Calculated attribute processing function
+> - `$[&self|&mut self]?`: Indicates that it can be `&self` or `&mut self`, which is up to you to decide
+> - `$return_value_type`: Return value type
+
+### Example
+
+The way to write a calculated property is to use a method to declare it when binding the property:
+
+```html
+<template>
+    <component name="Hello" class="hello_view" spacing="12.0">
+        <label :text="fmt_count()"></label>
+    </component>
+</template>
+
+<script>
+#[component]
+pub struct Hello{
+    count: u32,
+}
+
+impl Hello{
+    #[computed([count])]
+    fn fmt_count(&self) -> String{
+        format!("count: {}", self.count)
+    }   
+}
+</script>
+```
+
+## `nav_to!`
+
+Used to jump from a sub-page of routing management to other sub-pages.
+
+### Usage
+
+```rust
+nav_to!($page_id);
+```
+
+> - `$page_id`: id of the page
+
+```toml title="router.toml"
+[bar_pages]
+login = { path = "crate::views::login::*", component = "Login" }
+```
+
+The login key configured in `router.toml` is the page id
+
+### Example
+
+```rust
+impl Hello{
+    pub fn to_register(&mut self) {
+        nav_to!(register);
+    }
+}
+```
+
+## `nav_back!`
+
+Return the route to the previous page by pushing the stack, if any.
+
+### Usage
+
+```rust
+nav_back!();
+```
+
+### Example
+
+```
+impl Hello{
+    pub fn back(&mut self) {
+        nav_back!();
+    }
+}
+```

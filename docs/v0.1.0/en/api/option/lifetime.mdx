@@ -1,0 +1,62 @@
+import { Badge } from '@theme';
+
+# Life cycle  <Badge text="experiment" type="danger" />
+
+> [!WARNING]
+>
+> Currently, the complete life cycle has not been fully implemented. It is an experimental function. 
+>
+> Open `#[before_mount]`, `#mounted`, `#[before_update]`, `#[updated]`
+
+## `#[before_mount]`
+
+Called immediately after the component instance is initialized. Use the `#[before_mount]` annotation on a method or closure.
+
+### Usage
+
+```rust
+impl MyView{
+    #[before_mount]
+    fn before_mount(){
+        println!("before mount!");
+    }
+}
+```
+
+## `#[mounted]`
+
+Options called after instance initialization is complete
+
+### Usage
+
+```rust
+impl MyView{
+    #[mounted]
+    fn mounted(){
+        println!("mounted!");
+    }
+}
+```
+
+## `#[before_update]`
+
+Called after component properties are updated but before re-rendering the component
+
+### Usage
+
+## `#[updated]`
+
+Called after the component properties have been updated and the component has been re-rendered.
+
+### Usage
+
+```rust
+impl Hello{
+    #[updated]
+    fn do_updated(&mut self){
+        println!("do updated => hello.gen!");
+        let new_val = self.get_count() + 1;
+        self.set_count(new_val);
+    }   
+}
+```
