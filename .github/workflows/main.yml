@@ -1,4 +1,4 @@
-name: GenUI CI/CD
+name: Vocespace CI/CD
 
 on:
   push:
