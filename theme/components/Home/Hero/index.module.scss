@@ -140,9 +140,14 @@
       }
 
       .button-group {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 12px;
         .get-started {
           font-size: 14px !important;
         }
+        
       }
     }
   }

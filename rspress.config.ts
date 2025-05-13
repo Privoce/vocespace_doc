@@ -40,7 +40,7 @@ export default defineConfig({
       {
         icon: "github",
         mode: "link",
-        content: "https://github.com/Privoce/GenUI",
+        content: "https://github.com/Privoce/vocespace-client",
       },
     ],
   },
