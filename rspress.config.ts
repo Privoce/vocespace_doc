@@ -3,6 +3,7 @@ import { defineConfig } from "rspress/config";
 import alignImage from "rspress-plugin-align-image";
 
 export default defineConfig({
+  base: "/vocespace_doc",
   root: path.join(__dirname, "docs"),
   title: "Vocespace Doc",
   description: "Documentation for Vocespace",
