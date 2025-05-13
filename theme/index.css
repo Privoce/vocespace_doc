@@ -1,12 +1,12 @@
 :root {
-    --rp-c-brand: #ff8b00;
-    --rp-c-brand-dark: #ff8b00;
-    --rp-c-brand-darker: #c26c1d;
-    --rp-c-brand-light: #f2a65a;
-    --rp-c-brand-lighter: #f2a65a;
+    --rp-c-brand: #22CCEE;
+    --rp-c-brand-dark: #22CCEE;
+    --rp-c-brand-darker: #1a93ab;
+    --rp-c-brand-light: #22CCEE;
+    --rp-c-brand-lighter: #22CCEE;
     --rp-c-link: var(--rp-c-brand);
-    --rp-c-brand-tint: rgba(250, 192, 61, 0.15);
-    --rp-code-title-bg: rgba(250, 192, 61, 0.15);
+    --rp-c-brand-tint: #1a93ab41;
+    --rp-code-title-bg: #1a93ab;
     --rp-code-block-bg: rgba(214, 188, 70, 0.05);
     --rp-custom-block-info-bg: rgba(250, 192, 61, 0.05);
     --rp-custom-block-info-border: rgba(250, 192, 61, 0.5);

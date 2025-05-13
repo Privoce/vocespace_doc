@@ -6,17 +6,7 @@
     },
     {
         "type": "dir",
-        "name": "tutorial",
-        "label": "教程"
-    },
-    {
-        "type": "dir",
-        "name": "config",
-        "label": "配置"
-    },
-    {
-        "type": "dir",
-        "name": "components",
-        "label": "组件"
+        "name": "deploy",
+        "label": "部署"
     }
 ]

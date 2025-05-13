@@ -13,6 +13,7 @@ export interface HeroProps {
   learnMoreButtonText?: string;
   onClickGetStarted?: () => void;
   onClickLearnMore?: () => void;
+  onClickDemo?: () => void;
 }
 
 const Hero = memo(
@@ -27,6 +28,7 @@ const Hero = memo(
     learnMoreButtonText,
     onClickGetStarted,
     onClickLearnMore,
+    onClickDemo
   }: HeroProps) => {
     return (
       <section className={styles.hero}>
@@ -47,6 +49,12 @@ const Hero = memo(
               onClick={onClickGetStarted}
             >
               {getStartedButtonText}
+            </button>
+            <button
+              className={styles["get-started"]}
+              onClick={onClickDemo}
+            >
+              Demo
             </button>
             <button className={styles["learn-more"]} onClick={onClickLearnMore}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

@@ -3,25 +3,5 @@
     "text": "Doc",
     "link": "/doc/guide/overview",
     "activeMatch": "/doc/"
-  },
-  {
-    "text": "Components",
-    "link": "/components/",
-    "activeMatch": "/components/"
-  },
-  {
-    "text": "Tools",
-    "link": "/tools/overview",
-    "activeMatch": "/tools/"
-  },
-  {
-    "text": "Examples",
-    "link": "/examples/overview",
-    "activeMatch": "/examples/"
-  },
-  {
-    "text": "API",
-    "link": "/api/",
-    "activeMatch": "/api/"
   }
 ]

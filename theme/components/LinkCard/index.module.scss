@@ -1,7 +1,7 @@
 .card {
     width: 420px;
     background-color: transparent;
-    border: 1px solid #ff8143;
+    border: 1px solid #22CCEE;
     border-radius: 6px;
     padding: 12px;
     transition: all 0.3s;
@@ -26,8 +26,8 @@
         margin-right: 24px;
     }
     &:hover{
-        box-shadow: 0 0 10px 2px #ff8143;
-        background-color: #ff55000b;
+        box-shadow: 0 0 10px 2px #22CCEE;
+        background-color: #0048ff0e
         // .card-title{
         //     color: #fff;
         // }

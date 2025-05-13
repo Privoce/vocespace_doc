@@ -16,6 +16,10 @@ export function HomeLayout() {
     window.open("https://github.com/Privoce/vocespace-client", "_blank");
   }, []);
 
+  const handleClickedDemo = useCallback(() => {
+    window.open("https://space.voce.chat/", "_blank");
+  }, []);
+
   return (
     <>
       <Hero
@@ -29,6 +33,7 @@ export function HomeLayout() {
         learnMoreButtonText={t("learnMore")}
         onClickGetStarted={handleClickGetStarted}
         onClickLearnMore={handleClickedMore}
+        onClickDemo={handleClickedDemo}
       />
     </>
   );

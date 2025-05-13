@@ -30,15 +30,15 @@
       border-radius: 50%;
       user-select: none;
       position: relative;
-      height: 360px;
+      height: fit-content;
       width: 360px;
       display: flex;
       align-items: center;
       justify-content: center;
+      margin: 16px;
       &-img {
-        
         height: 240px;
-        filter: drop-shadow(0px 0px 140px #22CCEE);
+        filter: drop-shadow(0px 0px 120px #08b0d2);
       }
       &-img-rs {
         z-index: 111;
