@@ -52,10 +52,10 @@ export default defineConfig({
   route: {
     cleanUrls: true,
   },
-  multiVersion: {
-    default: "v0.1.0",
-    versions: ["v0.1.0"],
-  },
+  // multiVersion: {
+  //   default: "v0.1.0",
+  //   versions: ["v0.1.0"],
+  // },
   search: {
     versioned: true,
   },
