@@ -23,9 +23,8 @@ export function HomeLayout() {
   return (
     <>
       <Hero
-        logo={normalizeImagePath(t("logo"))}
+        logo={normalizeImagePath("/logo.svg")}
         header={t("header")}
-        logo_rs={normalizeImagePath(t("rs"))}
         title={t("heroTitle")}
         subTitle={t("heroSlogan")}
         description={t("heroSubSlogan")}

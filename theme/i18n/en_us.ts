@@ -1,6 +1,5 @@
 export const EN_US = {
     // hero
-    logo: '/vocespace.svg',
     header: '🥳 VoceSpace',
     rs: '/rs.png',
     heroTitle: 'VoceSpace',

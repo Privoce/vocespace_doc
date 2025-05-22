@@ -1,6 +1,5 @@
 import * as path from "node:path";
 import { defineConfig } from "rspress/config";
-import alignImage from "rspress-plugin-align-image";
 
 export default defineConfig({
   base: "/vocespace_doc",
@@ -13,11 +12,7 @@ export default defineConfig({
     dark: "/vocespace.svg",
   },
   lang: "en",
-  globalStyles: path.join(__dirname, 'theme', 'index.css'),
-  plugins: [alignImage({
-    justify: 'center',
-    containerClassNames: ['img-center'],
-  })],
+  globalStyles: path.join(__dirname, "theme", "index.css"),
   themeConfig: {
     enableContentAnimation: true,
     locales: [
@@ -26,14 +21,14 @@ export default defineConfig({
         label: "English",
         title: "VoceSpace",
         description: "Documentation for VoceSpace",
-        outlineTitle: 'Table of Contents',
+        outlineTitle: "Table of Contents",
       },
       {
         lang: "zh",
         label: "中文",
         title: "VoceSpace",
         description: "VoceSpace 的文档",
-        outlineTitle: '目录',
+        outlineTitle: "目录",
       },
     ],
     socialLinks: [
@@ -47,7 +42,7 @@ export default defineConfig({
   markdown: {
     showLineNumbers: true,
     checkDeadLinks: true,
-    highlightLanguages:[['rs', 'rust']]
+    highlightLanguages: [["rs", "rust"]],
   },
   route: {
     cleanUrls: true,
@@ -59,5 +54,4 @@ export default defineConfig({
   search: {
     versioned: true,
   },
-  
 });

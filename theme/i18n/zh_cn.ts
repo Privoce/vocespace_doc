@@ -1,7 +1,6 @@
 import type { EN_US } from './en_us';
 
 export const ZH_CN: Record<keyof typeof EN_US, string> = {
-    logo: '/logo.svg',
     header: '🥳 VoceSpace',
     rs: '/rs.png',
     heroTitle: 'VoceSpace',

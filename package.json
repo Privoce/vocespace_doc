@@ -8,8 +8,7 @@
     "preview": "rspress preview"
   },
   "dependencies": {
-    "rspress": "^1.38.0",
-    "rspress-plugin-align-image": "^0.3.0"
+    "rspress": "^1.44.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.17"

@@ -20,7 +20,6 @@ const Hero = memo(
   ({
     logo,
     header,
-    logo_rs,
     title,
     subTitle,
     description,
@@ -39,7 +38,6 @@ const Hero = memo(
           <h1 className={styles.title}>{title}</h1>
           <p className={styles.subtitle}>{subTitle}</p>
           <div className={styles.logo}>
-            {/* <img className={styles["logo-img-rs"]} src={logo_rs} /> */}
             <img className={styles["logo-img"]} src={logo} alt="logo" />
           </div>
           <p className={styles.description}>{description}</p>
