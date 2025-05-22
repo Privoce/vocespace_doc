@@ -1,9 +1,9 @@
 export const EN_US = {
     // hero
     logo: '/vocespace.svg',
-    header: '🥳 Vocespace',
+    header: '🥳 VoceSpace',
     rs: '/rs.png',
-    heroTitle: 'Vocespace',
+    heroTitle: 'VoceSpace',
     heroSlogan: '',
     heroSubSlogan: '',
     getStarted: '🥳 QuickStart',

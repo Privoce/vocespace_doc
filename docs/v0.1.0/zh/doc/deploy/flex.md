@@ -1,4 +1,4 @@
-# Vocespace 灵活部署指南
+# VoceSpace 灵活部署指南
 
 本文档介绍如何在 Ubuntu 服务器上部署 `vocespace-client` 前端项目，配置 Nginx + HTTPS，安装依赖、使用 PM2 管理服务，并配置 TURN 服务用于 WebRTC。
 
@@ -194,7 +194,7 @@ sudo certbot renew --dry-run
 
 ## 前端依赖安装与 pm2 管理
 
-我们可以通过使用pm2对Vocespace项目进行管理
+我们可以通过使用pm2对VoceSpace项目进行管理
 
 ```bash
 # 安装 PM2

@@ -5,8 +5,8 @@ import alignImage from "rspress-plugin-align-image";
 export default defineConfig({
   base: "/vocespace_doc",
   root: path.join(__dirname, "docs"),
-  title: "Vocespace Doc",
-  description: "Documentation for Vocespace",
+  title: "VoceSpace Doc",
+  description: "Documentation for VoceSpace",
   icon: "/favicon.ico",
   logo: {
     light: "/vocespace.svg",
@@ -24,15 +24,15 @@ export default defineConfig({
       {
         lang: "en",
         label: "English",
-        title: "Vocespace",
-        description: "Documentation for Vocespace",
+        title: "VoceSpace",
+        description: "Documentation for VoceSpace",
         outlineTitle: 'Table of Contents',
       },
       {
         lang: "zh",
         label: "中文",
-        title: "Vocespace",
-        description: "Vocespace 的文档",
+        title: "VoceSpace",
+        description: "VoceSpace 的文档",
         outlineTitle: '目录',
       },
     ],

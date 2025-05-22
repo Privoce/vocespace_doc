@@ -1,4 +1,4 @@
-name: Vocespace CI/CD
+name: VoceSpace CI/CD
 
 on:
   push:
