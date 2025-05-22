@@ -26,15 +26,24 @@ docker run -d \
 > [!NOTE]
 >
 > * `-p 3000:3000`：将容器的 3000 端口映射至宿主机 3000 端口。
-> * `-e SERVER_NAME=your.server.name`：设置服务运行的主机名，供应用内部识别。
+> * `-e SERVER_NAME=your.server.name`：设置服务运行的主机名，供应用内部识别。(可选)
 > * `--name`：给容器命名，便于后续管理。
 
 
 ## 2. 安装并配置Caddy
 
+> [!INFO]
+>
+> 以下为 Ubuntu/Debian 安装方式
+>
+> 其他类型请参考：[Caddy install](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
+
 ### 2.1 安装Caddy
 
 ```bash
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
 sudo apt update
 sudo apt install caddy
 ```
@@ -43,16 +52,19 @@ sudo apt install caddy
 
 Caddy支持多种方式进行配置，同时也直接支持使用nginx conf的方式
 
+
 ```bash
 vim /etc/caddy/Caddyfile
 
 # 配置如下：
 your.server.name {
-    root * /app
-    ...
+    tls {
+      protocols tls1.2 tls1.3
+    }
     reverse_proxy /* localhost:3000
 }
 ```
+
 
 ### 2.3 重启并开机自启动
 

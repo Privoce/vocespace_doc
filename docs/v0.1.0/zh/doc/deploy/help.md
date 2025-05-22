@@ -1,0 +1,143 @@
+# 帮助
+
+## 查看自己的linux架构
+
+VoceSpace含有两种镜像:
+- amd: `privoce/vocespace_amd`
+- arm: `privoce/vocespace_ard`
+
+所以您需要知道自己当前的服务器架构进行选择
+
+### 1. 使用 `uname` 命令
+
+`uname` 命令可以显示系统的内核信息，包括硬件架构。
+
+运行以下命令：
+```bash
+uname -m
+```
+
+- 如果输出为 `x86_64`，则表示系统是基于 AMD64 或 Intel64 架构（通常称为 x86_64）。
+- 如果输出为 `aarch64` 或 `arm64`，则表示系统是基于 ARM64 架构。
+- 如果输出为 `armv7l` 或类似内容，则表示系统是基于 ARMv7 架构。
+
+### 2. 使用 `arch` 命令
+`arch` 命令也可以显示系统的架构类型。
+
+运行以下命令：
+```bash
+arch
+```
+
+- 如果输出为 `x86_64`，则表示系统是基于 AMD64 或 Intel64 架构。
+- 如果输出为 `aarch64` 或 `arm64`，则表示系统是基于 ARM64 架构。
+- 如果输出为 `armv7l` 或类似内容，则表示系统是基于 ARMv7 架构。
+
+
+
+## Docker 网络连接超时
+
+### 配置Docker
+
+国内用户可能会遇到Docker Hub访问连接超时的问题，请按照以下内容进行配置。
+
+#### 创建daemon.json
+
+```bash
+sudo mkdir -p /etc/docker
+sudo touch /etc/docker/daemon.json
+```
+
+#### 添加仓库镜像
+
+- 腾讯: `https://mirror.ccs.tencentyun.com`
+- 科大: `https://docker.mirrors.ustc.edu.cn`
+- 阿里: 见 控制台 -> 搜索 -> 镜像容器服务ACR -> 镜像工具 -> 镜像加速
+
+```bash
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": ["https://mirror.ccs.tencentyun.com", "https://docker.mirrors.ustc.edu.cn"]
+}
+EOF
+```
+
+#### 重启docker
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+### 更换服务器
+
+在中国国内，即使服务器拥有公网 IP，也可能无法流畅访问 Docker Hub、GitHub 等外网服务。这主要是由于网络环境的复杂性以及相关政策的限制。以下是可能的原因及解决方法：
+常见原因
+
+- DNS 解析问题：默认的 DNS 服务器可能无法正确解析 Docker Hub 或 GitHub 的域名
+- 网络限制：某些网络环境（如运营商网络、企业内网）可能会限制或屏蔽对特定外网服务的访问
+- 防火墙或安全策略：服务器的防火墙或安全组规则可能阻止了对特定服务的访问
+- GFW 影响：在国内，部分外网服务可能受到 GFW 的限制
+
+> [!TIP]
+>
+> 因此我们推荐您购买地区:
+> 1. 中国香港
+> 2. 日本
+> 3. 韩国
+> 4. 新加坡
+> 5. 欧美国家
+
+## Docker 常用指令
+
+### 查看镜像
+
+```bash
+docker image ls
+# 或使用
+docker images
+```
+
+### 查看所有容器
+
+```bash
+docker ps -a
+```
+
+### 查看正在运行的容器
+
+```bash
+docker ps
+```
+
+### 关闭容器 
+
+```bash
+docker stop container_name_or_id
+```
+
+### 杀死容器 (强制关闭)
+
+```bash
+docker kill container_name_or_id
+```
+
+### 删除容器
+
+```bash
+docker rm container_name_or_id
+
+# 删除已经停止的容器
+docker container prune
+# 删除所有，包括正在运行的
+docker rm -f $(docker ps -aq)
+```
+
+### 删除镜像
+
+```bash
+docker rmi image_name_or_id
+
+# 删除所有
+docker rmi -f $(docker images -q)
+```

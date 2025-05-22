@@ -1,19 +1,20 @@
 import { Tab, Tabs } from "rspress/theme";
 
-# 本地Docker部署
+# 本地 Docker 部署
 
-## 1. 安装Docker(Docker Engine|Desktop)
+## 1. 安装 Docker(Docker Engine|Desktop)
 
 > [!INFO]
 >
-> 有关具体的Docker安装，或安装时出现问题请参看：
+> 有关具体的 Docker 安装，或安装时出现问题请参看：
+>
 > 1. [Docker Engine Install](https://docs.docker.com/engine/install)
 > 2. [Docker Desktop Install](https://docs.docker.com/desktop/)
 >
-> **如果您是新生并对命令行感到陌生，我们推荐您安装Docker Desktop。**
-> 
-> **在下面的安装中，如果您使用的是Macos系统或Windows系统我们将引导您安装Docker Desktop。**
- 
+> **如果您是新生并对命令行感到陌生，我们推荐您安装 Docker Desktop。**
+>
+> **在下面的安装中，如果您使用的是 Macos 系统或 Windows 系统我们将引导您安装 Docker Desktop。**
+
 <Tabs>
     <Tab label="Macos" style={{padding: "16px"}}>
         <p>
@@ -31,70 +32,100 @@ import { Tab, Tabs } from "rspress/theme";
         [Windows-ARM64](https://desktop.docker.com/win/main/arm64/Docker%20Desktop%20Installer.exe?utm_source=docker&utm_medium=webreferral&utm_campaign=dd-smartbutton&utm_location=module&_gl=1*gz6juv*_gcl_au*NTM4NzM2Njg3LjE3NDcxMzAyMTA.*_ga*MTk1NDA1MTg1NS4xNzMzMzA0NDc0*_ga_XJWPQMJYHQ*czE3NDcxMzAyMTAkbzUkZzEkdDE3NDcxMzEwNzEkajYwJGwwJGgw)
        </p>
     </Tab>
-    <Tab label="Linux(Ubuntu)">
-        ```shell
-        # 彻底卸载旧版本，并移除资源
-        sudo apt-get purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
-        sudo rm -rf /var/lib/docker
-        sudo rm -rf /var/lib/containerd
-        sudo rm /etc/apt/sources.list.d/docker.list
-        sudo rm /etc/apt/keyrings/docker.asc
-        
-        # 更新并初始化Docker apt仓库
-        
-        sudo apt-get update
-        sudo apt-get install ca-certificates curl
-        sudo install -m 0755 -d /etc/apt/keyrings
-        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-        sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-        # 添加仓库到apt源
-        echo \
-        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-        $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
-        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-        sudo apt-get update
-        
-        # 安装最新版本Docker
-        sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-        
-        # 验证安装
-        sudo docker run hello-world
-        ```
+    <Tab label="Linux(Ubuntu)" style={{padding: "0 16px"}}>
+### 彻底卸载旧版本，并移除资源
+ ```bash
+sudo apt-get purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
+sudo rm -rf /var/lib/docker
+sudo rm -rf /var/lib/containerd
+sudo rm /etc/apt/sources.list.d/docker.list
+sudo rm /etc/apt/keyrings/docker.asc
+```
+### 更新并初始化Docker apt仓库
+```bash
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+### 添加仓库到apt源
+```bash
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+```
+### 安装最新版本Docker
+```bash
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+# 验证安装
+sudo docker run hello-world
+```
     </Tab>
+
 </Tabs>
 
-## 2. 获取Vocespace镜像
+## 2. 获取 Vocespace 镜像
+
+VoceSpace含有两种镜像:
+- amd: `privoce/vocespace_amd`
+- arm: `privoce/vocespace_ard`
+
+所以您需要知道自己当前的服务器架构进行选择, 见[help-查看自己的linux架构](zh/doc/deploy/help#查看自己的linux架构)
 
 ```shell
-docker pull xxxx
+docker pull privoce/vocespace_amd:latest
 ```
 
 ## 3. 启动容器
 
 ```shell
-docker run -p 3000:3000 live_meet-livemeet-prod:latest
+docker run -d --restart=always \
+-p 3000:3000 \
+-p 7880:7880 \
+--name vocespace \
+privoce/vocespace_amd:latest
 ```
 
+
+### 输出
+
+#### Docker ce
+
+如果在Linux上，您可以使用`docker ps`查看进程，然后浏览器访问`your_ip:3000`查看启动的应用
+
+云服务器需要配置出入的安全组，端口为3000，允许所有IPV4.
+
+#### Docker desktop
+
 容器启动后观察输出, 当输出`Ready on http://localhost:3000`时，表面本地部署已经完成
+
+如果您使用的是Docker desktop，那么你会在容器log部分得到以下输出：
 
 ```bash
 2025-05-13 05:02:16 livemeet-prod-1  | 环境变量配置:
 2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_API_KEY=devkey
 2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_API_SECRET=secret
-2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_URL=wss://space.voce.chat
+2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_URL=ws://localhost:7880
 2025-05-13 05:02:16 livemeet-prod-1  | NEXT_PUBLIC_BASE_PATH=
-2025-05-13 05:02:16 livemeet-prod-1  | NEXT_PORT=3000
+2025-05-13 05:02:16 livemeet-prod-1  | PORT=3000
 2025-05-13 05:02:16 livemeet-prod-1  | TURN_CREDENTIAL=
 2025-05-13 05:02:16 livemeet-prod-1  | TURN_URL=
 2025-05-13 05:02:16 livemeet-prod-1  | TURN_USERNAME=
-2025-05-13 05:02:16 livemeet-prod-1  | 
+2025-05-13 05:02:16 livemeet-prod-1  |
 2025-05-13 05:02:16 livemeet-prod-1  | > livekit-meet@0.1.0 start /app
 2025-05-13 05:02:16 livemeet-prod-1  | > node server.js
-2025-05-13 05:02:16 livemeet-prod-1  | 
+2025-05-13 05:02:16 livemeet-prod-1  |
 2025-05-13 05:02:16 livemeet-prod-1  | (node:547) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///app/server.js is not specified and it doesn't parse as CommonJS.
 2025-05-13 05:02:16 livemeet-prod-1  | Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 2025-05-13 05:02:16 livemeet-prod-1  | To eliminate this warning, add "type": "module" to /app/package.json.
 2025-05-13 05:02:16 livemeet-prod-1  | (Use `node --trace-warnings ...` to show where the warning was created)
 2025-05-13 05:02:17 livemeet-prod-1  | > Ready on http://localhost:3000
 ```
+
+
+> [!WARNING]
+>
+> 本地部署无法进入应用，需要配置https，请查看后续教程
