@@ -18,9 +18,10 @@ Caddy 比 Nginx 更简单，因为它可以自动申请证书。
 ```bash
 docker run -d \
   -p 3000:3000 \
+  -p 7880:7880 \
   -e SERVER_NAME=your.server.name \
   --name live_meet_app \
-  live_meet-livemeet-prod:latest
+  privoce/vocespace:latest
 ```
 
 > [!NOTE]
@@ -52,6 +53,9 @@ sudo apt install caddy
 
 Caddy支持多种方式进行配置，同时也直接支持使用nginx conf的方式
 
+> [!WARNING]
+>
+> 请确保您已经购买了域名并进行了DNS解析
 
 ```bash
 vim /etc/caddy/Caddyfile

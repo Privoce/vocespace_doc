@@ -17,9 +17,10 @@
 ```bash
 docker run -d \
   -p 3000:3000 \
+  -p 7880:7880 \
   -e SERVER_NAME=your.server.name \
   --name live_meet_app \
-  live_meet-livemeet-prod:latest
+  privoce/vocespace:latest
 ```
 
 > [!NOTE]
@@ -87,7 +88,9 @@ http {
 
 ### 2.3 配置站点文件（虚拟主机配置）
 
-路径建议：`/etc/nginx/sites-enabled/livemeet.conf` 或 `/etc/nginx/conf.d/livemeet.conf`
+路径建议：`/etc/nginx/sites-enabled/vocespace` 或 `/etc/nginx/conf.d/vocespace`
+
+首先先简单进行配置:
 
 ```nginx
 # HTTP 重定向至 HTTPS
@@ -97,15 +100,38 @@ server {
 
     server_name your.server.name;
 
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
-
     location / {
         return 301 https://$host$request_uri;
     }
-}
 
+    return 404;
+}
+```
+### 2.4 使用 Certbot 申请 HTTPS 证书
+
+在 DNS 服务商中确保域名已正确解析至服务器 IP。
+
+#### 签发证书命令
+
+```bash
+certbot --nginx -d your.server.name --register-unsafely-without-email
+```
+
+> [!NOTE]
+>
+> * `--nginx`：Certbot 将自动修改你的 nginx 配置以启用 HTTPS。
+> * `--register-unsafely-without-email`：不绑定邮箱。**不推荐正式使用**，建议加上 `--email your@email.com`。
+
+### 验证 Nginx 状态并重启
+
+```bash
+nginx -t
+systemctl reload nginx
+```
+
+### 2.5 补全https的配置
+
+```nginx
 # HTTPS 反向代理配置
 server {
     listen 443 ssl;
@@ -138,17 +164,17 @@ server {
     }
 
     # Socket.IO 实时通信代理
-    location /socket.io {
-        proxy_pass http://127.0.0.1:3001;  # 请根据实际端口修改
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "Upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
+    # location /socket.io {
+    #    proxy_pass http://127.0.0.1:3000;  # 请根据实际端口修改
+    #    proxy_http_version 1.1;
+    #    proxy_set_header Upgrade $http_upgrade;
+    #    proxy_set_header Connection "Upgrade";
+    #    proxy_set_header Host $host;
+    #    proxy_set_header X-Real-IP $remote_addr;
+    #    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    #    proxy_set_header X-Forwarded-Proto $scheme;
+    #    proxy_cache_bypass $http_upgrade;
+    # }
 }
 ```
 
@@ -156,8 +182,8 @@ server {
 >
 > * `server_name` 必须与你实际申请的证书域名一致。
 > * 请确保 `/etc/letsencrypt/live/your.server.name/` 中的文件已生成（见下一节）。
+> 其中ssl的配置由certbot生成
 
----
 
 ### 2.4 启动并检测 Nginx 状态
 
@@ -172,27 +198,7 @@ systemctl restart nginx
 ```
 
 
-## 3. 使用 Certbot 申请 HTTPS 证书
 
-在 DNS 服务商中确保域名已正确解析至服务器 IP。
-
-### 签发证书命令
-
-```bash
-certbot --nginx -d your.server.name --register-unsafely-without-email
-```
-
-> [!NOTE]
->
-> * `--nginx`：Certbot 将自动修改你的 nginx 配置以启用 HTTPS。
-> * `--register-unsafely-without-email`：不绑定邮箱。**不推荐正式使用**，建议加上 `--email your@email.com`。
-
-### 验证 Nginx 状态并重启
-
-```bash
-nginx -t
-systemctl reload nginx
-```
 
 ## 补充建议
 

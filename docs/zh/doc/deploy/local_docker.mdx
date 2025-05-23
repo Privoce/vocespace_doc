@@ -70,13 +70,16 @@ sudo docker run hello-world
 ## 2. 获取 VoceSpace 镜像
 
 VoceSpace含有两种镜像:
-- amd: `privoce/vocespace_amd`
-- arm: `privoce/vocespace_ard`
+- amd: `privoce/vocespace:latest`
+- arm: `privoce/vocespace:latest_arm`
 
 所以您需要知道自己当前的服务器架构进行选择, 见: [help-查看自己的linux架构](/zh/doc/deploy/help#查看自己的linux架构)
 
 ```shell
-docker pull privoce/vocespace_amd:latest
+# amd
+docker pull privoce/vocespace:latest
+# arm
+docker pull privoce/vocespace:latest_arm
 ```
 
 ## 3. 启动容器
@@ -86,7 +89,7 @@ docker run -d --restart=always \
 -p 3000:3000 \
 -p 7880:7880 \
 --name vocespace \
-privoce/vocespace_amd:latest
+privoce/vocespace:latest
 ```
 
 

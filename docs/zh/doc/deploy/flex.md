@@ -404,13 +404,13 @@ pm2 stop $PKG_NAME
 # delete $PKG_NAME
 pm2 delete $PKG_NAME
 # start pm2 npm 
-PORT=3030 pm2 start npm --name $PKG_NAME -- start
+PORT=3000 pm2 start npm --name $PKG_NAME -- start
 # save pm2
 pm2 save
 # sleep 2s for pm2 server to start
 sleep 2
 # netstat -tulnp | grep 3030 to check if the server is running, if have echo success
-if [ $(netstat -tulnp | grep 3030 | wc -l) -gt 0 ]; then
+if [ $(netstat -tulnp | grep 3000 | wc -l) -gt 0 ]; then
     echo "pm2 server rebuild success!" >> $LOG_PATH
 else 
     echo "pm2 server rebuild failed!" >> $LOG_PATH
