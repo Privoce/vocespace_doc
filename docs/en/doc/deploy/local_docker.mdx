@@ -1,0 +1,134 @@
+import { Tab, Tabs } from "@theme";
+
+# Local Docker deployment
+
+## 1. Install Docker (Docker Engine|Desktop)
+
+> [!INFO]
+>
+> For detailed Docker installation instructions or problems with installation, please refer to:
+>
+> 1. [Docker Engine Install](https://docs.docker.com/engine/install)
+> 2. [Docker Desktop Install](https://docs.docker.com/desktop/)
+>
+> **If you are a freshman and unfamiliar with the command line, we recommend that you install Docker Desktop.**
+>
+> **In the following installation, if you are using MacOS or Windows, we will guide you to install Docker Desktop.**
+
+<Tabs>
+    <Tab label="Macos" style={{padding: "16px"}}>
+        <p>
+            [Macos-M series chips](https://desktop.docker.com/mac/main/arm64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=dd-smartbutton&utm_location=module&_gl=1*ka9maz*_gcl_au*NTM4NzM2Njg3LjE3NDcxMzAyMTA.*_ga*MTk1NDA1MTg1NS4xNzMzMzA0NDc0*_ga_XJWPQMJYHQ*czE3NDcxMzAyMTAkbzUkZzEkdDE3NDcxMzA5NDgkajQzJGwwJGgw)
+        </p>
+        <p>
+            [Macos-Intel series chips](https://desktop.docker.com/mac/main/amd64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=dd-smartbutton&utm_location=module&_gl=1*f8qjhp*_gcl_au*NTM4NzM2Njg3LjE3NDcxMzAyMTA.*_ga*MTk1NDA1MTg1NS4xNzMzMzA0NDc0*_ga_XJWPQMJYHQ*czE3NDcxMzAyMTAkbzUkZzEkdDE3NDcxMzEwNzEkajYwJGwwJGgw)
+        </p>
+    </Tab>
+    <Tab label="Windows" style={{padding: "16px"}}>
+       <p>
+         [Windows-AMD64](https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe?utm_source=docker&utm_medium=webreferral&utm_campaign=dd-smartbutton&utm_location=module&_gl=1*e61e0o*_gcl_au*NTM4NzM2Njg3LjE3NDcxMzAyMTA.*_ga*MTk1NDA1MTg1NS4xNzMzMzA0NDc0*_ga_XJWPQMJYHQ*czE3NDcxMzAyMTAkbzUkZzEkdDE3NDcxMzEwNzEkajYwJGwwJGgw)
+       </p>
+       <p>
+        [Windows-ARM64](https://desktop.docker.com/win/main/arm64/Docker%20Desktop%20Installer.exe?utm_source=docker&utm_medium=webreferral&utm_campaign=dd-smartbutton&utm_location=module&_gl=1*gz6juv*_gcl_au*NTM4NzM2Njg3LjE3NDcxMzAyMTA.*_ga*MTk1NDA1MTg1NS4xNzMzMzA0NDc0*_ga_XJWPQMJYHQ*czE3NDcxMzAyMTAkbzUkZzEkdDE3NDcxMzEwNzEkajYwJGwwJGgw)
+       </p>
+    </Tab>
+    <Tab label="Linux(Ubuntu)" style={{padding: "0 16px"}}>
+### Completely uninstall the old version and remove the resources
+ ```bash
+sudo apt-get purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
+sudo rm -rf /var/lib/docker
+sudo rm -rf /var/lib/containerd
+sudo rm /etc/apt/sources.list.d/docker.list
+sudo rm /etc/apt/keyrings/docker.asc
+```
+### Update and initialize the Docker apt repository
+```bash
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+### Add repository to apt sources
+```bash
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+```
+### Install the latest version of Docker
+```bash
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+# Verify Installation
+sudo docker run hello-world
+```
+    </Tab>
+
+</Tabs>
+
+## 2. Get VoceSpace image
+
+VoceSpace contains two images:
+- amd: `privoce/vocespace:latest`
+- arm: `privoce/vocespace:latest_arm`
+
+So you need to know your current server architecture to make a choice, see: [help-View your own Linux architecture](/doc/deploy/help#check-your-own-linux-architecture)
+
+```shell
+# amd
+docker pull privoce/vocespace:latest
+# arm
+docker pull privoce/vocespace:latest_arm
+```
+
+## 3. Run Container
+
+```shell
+docker run -d --restart=always \
+-p 3000:3000 \
+-p 7880:7880 \
+--name vocespace \
+privoce/vocespace:latest
+```
+
+
+### Output
+
+#### Docker ce
+
+If on Linux, you can use `docker ps` to view the process, and then visit `your_ip:3000` in the browser to view the started application
+
+The cloud server needs to configure the security group for ingress and egress, with port 3000, allowing all IPV4.
+
+#### Docker desktop
+
+Observe the output after the container is started. When the output is `Ready on http://localhost:3000`, the local deployment is complete
+
+If you are using Docker desktop, you will get the following output in the container log section:
+
+```bash
+2025-05-13 05:02:16 livemeet-prod-1  | 环境变量配置:
+2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_API_KEY=devkey
+2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_API_SECRET=secret
+2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_URL=ws://localhost:7880
+2025-05-13 05:02:16 livemeet-prod-1  | NEXT_PUBLIC_BASE_PATH=
+2025-05-13 05:02:16 livemeet-prod-1  | PORT=3000
+2025-05-13 05:02:16 livemeet-prod-1  | TURN_CREDENTIAL=
+2025-05-13 05:02:16 livemeet-prod-1  | TURN_URL=
+2025-05-13 05:02:16 livemeet-prod-1  | TURN_USERNAME=
+2025-05-13 05:02:16 livemeet-prod-1  |
+2025-05-13 05:02:16 livemeet-prod-1  | > livekit-meet@0.1.0 start /app
+2025-05-13 05:02:16 livemeet-prod-1  | > node server.js
+2025-05-13 05:02:16 livemeet-prod-1  |
+2025-05-13 05:02:16 livemeet-prod-1  | (node:547) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///app/server.js is not specified and it doesn't parse as CommonJS.
+2025-05-13 05:02:16 livemeet-prod-1  | Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+2025-05-13 05:02:16 livemeet-prod-1  | To eliminate this warning, add "type": "module" to /app/package.json.
+2025-05-13 05:02:16 livemeet-prod-1  | (Use `node --trace-warnings ...` to show where the warning was created)
+2025-05-13 05:02:17 livemeet-prod-1  | > Ready on http://localhost:3000
+```
+
+
+> [!WARNING]
+>
+> The local deployment cannot access the application, you need to configure https, please refer to the subsequent tutorial

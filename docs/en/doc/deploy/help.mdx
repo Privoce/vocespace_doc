@@ -1,0 +1,144 @@
+# Help
+
+## Check your own Linux architecture
+
+VoceSpace contains two images:
+- amd: `privoce/vocespace:latest`
+- arm: `privoce/vocespace:latest_arm`
+
+So you need to know your current server architecture to make a choice
+
+### 1. Use the `uname` command
+
+The `uname` command can display the system's kernel information, including the hardware architecture.
+
+Run the following command:
+```bash
+uname -m
+```
+
+- If the output is `x86_64`, it means the system is based on the AMD64 or Intel64 architecture (commonly known as x86_64).
+- If the output is `aarch64` or `arm64`, it means the system is based on the ARM64 architecture.
+- If the output is `armv7l` or something similar, it means the system is based on the ARMv7 architecture.
+
+### 2. Use the `arch` command
+The `arch` command can also display the system's architecture type.
+
+Run the following command:
+```bash
+arch
+```
+
+- If the output is `x86_64`, it means the system is based on AMD64 or Intel64 architecture.
+- If the output is `aarch64` or `arm64`, it means the system is based on ARM64 architecture.
+- If the output is `armv7l` or similar, it means the system is based on ARMv7 architecture.
+
+## Docker network connection timeout
+
+### Configure Docker
+
+Domestic users may encounter the problem of Docker Hub access connection timeout, please configure it according to the following content.
+
+#### Create daemon.json
+
+```bash
+sudo mkdir -p /etc/docker
+sudo touch /etc/docker/daemon.json
+```
+
+#### Add repository mirror
+
+- Tencent: `https://mirror.ccs.tencentyun.com`
+- HKUST: `https://docker.mirrors.ustc.edu.cn`
+- Alibaba: See Console -> Search -> ACR -> Image Tool -> Image Acceleration
+
+```bash
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+"registry-mirrors": ["https://mirror.ccs.tencentyun.com", "https://docker.mirrors.ustc.edu.cn"]
+}
+EOF
+```
+
+#### Restart docker
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+### Change server
+
+In China, even if the server has a public IP, it may not be able to smoothly access external network services such as Docker Hub and GitHub. This is mainly due to the complexity of the network environment and the restrictions of relevant policies. The following are possible reasons and solutions:
+Common reasons
+
+- DNS resolution problem: The default DNS server may not correctly resolve the domain name of Docker Hub or GitHub
+
+- Network restrictions: Some network environments (such as operator networks, corporate intranets) may restrict or block access to specific external network services
+
+- Firewall or security policy: The server's firewall or security group rules may block access to specific services
+
+- GFW impact: In China, some external network services may be restricted by GFW
+
+> [!TIP]
+>
+> Therefore, we recommend that you purchase in the following areas:
+> 1. Hong Kong, China
+> 2. Japan
+> 3. South Korea
+> 4. Singapore
+> 5. European and American countries
+
+## Common Docker instructions
+
+### View images
+
+```bash
+docker image ls
+# Or use
+docker images
+```
+
+### View all containers
+
+```bash
+docker ps -a
+```
+
+### View running containers
+
+```bash
+docker ps
+```
+
+### Shut down the container
+
+```bash
+docker stop container_name_or_id
+```
+
+### Kill the container (force shutdown)
+
+```bash
+docker kill container_name_or_id
+```
+
+### Delete the container
+
+```bash
+docker rm container_name_or_id
+
+# Delete the stopped container
+docker container prune
+# Delete all, including running ones
+docker rm -f $(docker ps -aq)
+```
+
+### Delete the image
+
+```bash
+docker rmi image_name_or_id
+
+# Delete all
+docker rmi -f $(docker images -q)
+```

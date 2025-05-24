@@ -1,5 +1,8 @@
 [
     "overview",
     "local_docker",
-    "docker_nginx"
+    "docker_nginx",
+    "docker_caddy",
+    "flex",
+    "help"
 ]
