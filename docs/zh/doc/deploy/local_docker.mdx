@@ -2,6 +2,11 @@ import { Tab, Tabs } from "@theme";
 
 # 本地 Docker 部署
 
+> [!WARNING]
+> 须知: 本地部署可以体验VoceSpace的所有功能，但无法在公开网络中进行访问，若您需要公网部署请参考:
+> 1. Docker + Nginx
+> 2. Docker + Caddy
+
 ## 1. 安装 Docker(Docker Engine|Desktop)
 
 > [!INFO]
@@ -85,50 +90,77 @@ docker pull privoce/vocespace:latest_arm
 ## 3. 启动容器
 
 ```shell
-docker run -d --restart=always \
+docker run -d \
 -p 3000:3000 \
--p 7880:7880 \
 --name vocespace \
 privoce/vocespace:latest
 ```
 
+> [!NOTE]
+>
+> 容器启动后会自动下载所需依赖，需要等待片刻，依赖下载完成后会进行环境配置并启动服务
+
 
 ### 输出
 
-#### Docker ce
+1. Docker ce: 如果在Linux上，您可以使用`docker ps`查看进程，然后浏览器访问`your_ip:3000`查看启动的应用, 然后使用 `docker logs <container_id>` 查看日志
+2. Docker desktop: 容器启动后观察输出, 当输出`Ready on http://ip:3000`时，表示本地部署已经完成
 
-如果在Linux上，您可以使用`docker ps`查看进程，然后浏览器访问`your_ip:3000`查看启动的应用
-
-云服务器需要配置出入的安全组，端口为3000，允许所有IPV4.
-
-#### Docker desktop
-
-容器启动后观察输出, 当输出`Ready on http://localhost:3000`时，表面本地部署已经完成
-
-如果您使用的是Docker desktop，那么你会在容器log部分得到以下输出：
 
 ```bash
-2025-05-13 05:02:16 livemeet-prod-1  | 环境变量配置:
-2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_API_KEY=devkey
-2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_API_SECRET=secret
-2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_URL=ws://localhost:7880
-2025-05-13 05:02:16 livemeet-prod-1  | NEXT_PUBLIC_BASE_PATH=
-2025-05-13 05:02:16 livemeet-prod-1  | PORT=3000
-2025-05-13 05:02:16 livemeet-prod-1  | TURN_CREDENTIAL=
-2025-05-13 05:02:16 livemeet-prod-1  | TURN_URL=
-2025-05-13 05:02:16 livemeet-prod-1  | TURN_USERNAME=
-2025-05-13 05:02:16 livemeet-prod-1  |
-2025-05-13 05:02:16 livemeet-prod-1  | > livekit-meet@0.1.0 start /app
-2025-05-13 05:02:16 livemeet-prod-1  | > node server.js
-2025-05-13 05:02:16 livemeet-prod-1  |
-2025-05-13 05:02:16 livemeet-prod-1  | (node:547) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///app/server.js is not specified and it doesn't parse as CommonJS.
-2025-05-13 05:02:16 livemeet-prod-1  | Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-2025-05-13 05:02:16 livemeet-prod-1  | To eliminate this warning, add "type": "module" to /app/package.json.
-2025-05-13 05:02:16 livemeet-prod-1  | (Use `node --trace-warnings ...` to show where the warning was created)
-2025-05-13 05:02:17 livemeet-prod-1  | > Ready on http://localhost:3000
+2025-05-29 02:44:09 ✅ Socket.IO 安装完成
+2025-05-29 02:44:15 环境变量配置:
+2025-05-29 02:44:15 LIVEKIT_API_KEY=devkey
+2025-05-29 02:44:15 LIVEKIT_API_SECRET=secret
+2025-05-29 02:44:15 LIVEKIT_URL=ws://localhost:7880
+2025-05-29 02:44:15 NEXT_PUBLIC_BASE_PATH=
+2025-05-29 02:44:15 PORT=3000
+2025-05-29 02:44:15 HOST=0.0.0.0
+2025-05-29 02:44:15 TURN_CREDENTIAL=
+2025-05-29 02:44:15 TURN_URL=
+2025-05-29 02:44:15 TURN_USERNAME=
+2025-05-29 02:44:15 WEBHOOK=
+2025-05-29 02:44:15 === 启动应用 ===
+2025-05-29 02:44:16 > Ready on http://0.0.0.0:3000
 ```
 
+## 4. 启动 livekit-server
 
-> [!WARNING]
->
-> 本地部署无法进入应用，需要配置https，请查看后续教程
+VoceSpace需要依赖livekit-server构建起webrtc以及其他相关服务
+
+### 下载 livekit-server
+<Tabs>
+    <Tab label="Macos">
+    ```bash
+    brew update && brew install livekit
+    ```
+    </Tab>
+    <Tab label="Windows" style={{padding: "6px"}}>
+        请移步[livekit github](https://github.com/livekit/livekit/releases)
+    </Tab>
+    <Tab label="Linux">
+    ```bash
+    curl -sSL https://get.livekit.io | bash
+    ```
+    </Tab>
+</Tabs>
+
+### 启动 livekit-server
+
+```
+livekit-server --dev --bind 0.0.0.0
+```
+
+## 云服务器说明
+
+### 配置安全组/防火墙
+
+在使用云服务器时，例如：阿里云，腾讯云，Google Cloud等，您需要对服务器等安全组/防火墙进行相关配置
+
+| port | type | ingress/egress | allow ip |
+|--|--|--|--|
+| 3000 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 3000 | tcp | egress | 0.0.0.0/0 Ipv4 |
+| 7880 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 7881 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 80 | tcp | ingress | 0.0.0.0/0 Ipv4 |

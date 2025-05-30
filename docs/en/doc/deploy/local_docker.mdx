@@ -2,6 +2,12 @@ import { Tab, Tabs } from "@theme";
 
 # Local Docker deployment
 
+> [!WARNING]
+> Note: Local deployment can experience all the functions of VoceSpace, but it cannot be accessed on the public network. If you need public network deployment, please refer to:
+>
+> 1. Docker + Nginx
+> 2. Docker + Caddy
+
 ## 1. Install Docker (Docker Engine|Desktop)
 
 > [!INFO]
@@ -70,6 +76,7 @@ sudo docker run hello-world
 ## 2. Get VoceSpace image
 
 VoceSpace contains two images:
+
 - amd: `privoce/vocespace:latest`
 - arm: `privoce/vocespace:latest_arm`
 
@@ -85,50 +92,77 @@ docker pull privoce/vocespace:latest_arm
 ## 3. Run Container
 
 ```shell
-docker run -d --restart=always \
+docker run -d \
 -p 3000:3000 \
--p 7880:7880 \
 --name vocespace \
 privoce/vocespace:latest
 ```
 
+> [!NOTE]
+>
+> After the container is started, the required dependencies will be automatically downloaded. You need to wait for a while. After the dependencies are downloaded, the environment will be configured and the service will be started.
 
 ### Output
 
-#### Docker ce
+1. Docker ce: If on Linux, you can use `docker ps` to view the process, then visit `your_ip:3000` in the browser to view the started application, and then use `docker logs <container_id>` to view the log
 
-If on Linux, you can use `docker ps` to view the process, and then visit `your_ip:3000` in the browser to view the started application
-
-The cloud server needs to configure the security group for ingress and egress, with port 3000, allowing all IPV4.
-
-#### Docker desktop
-
-Observe the output after the container is started. When the output is `Ready on http://localhost:3000`, the local deployment is complete
-
-If you are using Docker desktop, you will get the following output in the container log section:
+2. Docker desktop: Observe the output after the container is started. When the output is `Ready on http://ip:3000`, it means that the local deployment has been completed
 
 ```bash
-2025-05-13 05:02:16 livemeet-prod-1  | 环境变量配置:
-2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_API_KEY=devkey
-2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_API_SECRET=secret
-2025-05-13 05:02:16 livemeet-prod-1  | LIVEKIT_URL=ws://localhost:7880
-2025-05-13 05:02:16 livemeet-prod-1  | NEXT_PUBLIC_BASE_PATH=
-2025-05-13 05:02:16 livemeet-prod-1  | PORT=3000
-2025-05-13 05:02:16 livemeet-prod-1  | TURN_CREDENTIAL=
-2025-05-13 05:02:16 livemeet-prod-1  | TURN_URL=
-2025-05-13 05:02:16 livemeet-prod-1  | TURN_USERNAME=
-2025-05-13 05:02:16 livemeet-prod-1  |
-2025-05-13 05:02:16 livemeet-prod-1  | > livekit-meet@0.1.0 start /app
-2025-05-13 05:02:16 livemeet-prod-1  | > node server.js
-2025-05-13 05:02:16 livemeet-prod-1  |
-2025-05-13 05:02:16 livemeet-prod-1  | (node:547) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///app/server.js is not specified and it doesn't parse as CommonJS.
-2025-05-13 05:02:16 livemeet-prod-1  | Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-2025-05-13 05:02:16 livemeet-prod-1  | To eliminate this warning, add "type": "module" to /app/package.json.
-2025-05-13 05:02:16 livemeet-prod-1  | (Use `node --trace-warnings ...` to show where the warning was created)
-2025-05-13 05:02:17 livemeet-prod-1  | > Ready on http://localhost:3000
+2025-05-29 02:44:09 ✅ Socket.IO 安装完成
+2025-05-29 02:44:15 环境变量配置:
+2025-05-29 02:44:15 LIVEKIT_API_KEY=devkey
+2025-05-29 02:44:15 LIVEKIT_API_SECRET=secret
+2025-05-29 02:44:15 LIVEKIT_URL=ws://localhost:7880
+2025-05-29 02:44:15 NEXT_PUBLIC_BASE_PATH=
+2025-05-29 02:44:15 PORT=3000
+2025-05-29 02:44:15 HOST=0.0.0.0
+2025-05-29 02:44:15 TURN_CREDENTIAL=
+2025-05-29 02:44:15 TURN_URL=
+2025-05-29 02:44:15 TURN_USERNAME=
+2025-05-29 02:44:15 WEBHOOK=
+2025-05-29 02:44:15 === 启动应用 ===
+2025-05-29 02:44:16 > Ready on http://0.0.0.0:3000
 ```
 
+## 4. Start livekit-server
 
-> [!WARNING]
->
-> The local deployment cannot access the application, you need to configure https, please refer to the subsequent tutorial
+VoceSpace needs to rely on livekit-server to build webrtc and other related services
+
+### Download livekit-server
+
+<Tabs>
+  <Tab label="Macos">
+  ```bash 
+  brew update && brew install livekit 
+  ```
+  </Tab>
+  <Tab label="Windows" style={{ padding: "6px" }}>
+    Please go to [livekit github](https://github.com/livekit/livekit/releases)
+  </Tab>
+  <Tab label="Linux">
+  ```bash 
+  curl -sSL https://get.livekit.io | bash 
+  ```
+  </Tab>
+</Tabs>
+
+### Start livekit-server
+
+```
+livekit-server --dev --bind 0.0.0.0
+```
+
+## Cloud server description
+
+### Configure security groups/firewalls
+
+When using cloud servers, such as Alibaba Cloud, Tencent Cloud, Google Cloud, etc., you need to configure security groups/firewalls for the server, etc.
+
+| port | type | ingress/egress | allow ip       |
+| ---- | ---- | -------------- | -------------- |
+| 3000 | tcp  | ingress        | 0.0.0.0/0 Ipv4 |
+| 3000 | tcp  | egress         | 0.0.0.0/0 Ipv4 |
+| 7880 | tcp  | ingress        | 0.0.0.0/0 Ipv4 |
+| 7881 | tcp  | ingress        | 0.0.0.0/0 Ipv4 |
+| 80   | tcp  | ingress        | 0.0.0.0/0 Ipv4 |

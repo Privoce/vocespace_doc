@@ -1,26 +1,109 @@
 import Container from "@theme/components/Container";
-import { Badge } from '@theme';
-import { normalizeImagePath } from 'rspress/runtime';
+import { Badge } from "@theme";
+import { normalizeImagePath } from "rspress/runtime";
 
 # Introduction
 
 <Container>
-    <img src={normalizeImagePath('/vocespace.svg')} height="80px" width="200px" />
+  <img src={normalizeImagePath("/vocespace.svg")} height="80px" width="200px" />
 </Container>
 
-[VoceSpace](https://github.com/Privoce/vocespace-client) is a secure communications platform for modern enterprises, We will help you host your own secure video and audio conferencing platform under your subdomain with your own logo and branding. Complete control over your data with enterprise-grade encryption. 
+[VoceSpace](https://github.com/Privoce/vocespace-client) is a secure communication platform for modern enterprises. We will help you host your own secure video and audio conferencing platform under a subdomain and provide your own logo and brand. Fully control your data with enterprise-grade encryption.
 
+In today's digital age, the demand for enterprise communication is growing, which requires not only efficiency and convenience, but also data security and privacy protection. VoceSpace came into being. As a modern enterprise secure communication platform built on LiveKit, VoceSpace provides enterprises with a secure, customizable and powerful video and audio conferencing solution.
 
-## Functions
+## What is VoceSpace
 
-The following are the basic functions of VoceSpace
+VoceSpace is a secure communication platform designed for modern enterprises. It is built on LiveKit and uses the powerful performance and flexibility of LiveKit to provide enterprises with a stable and efficient communication environment. VoceSpace not only supports video and audio conferencing, but also has a series of advanced features such as device settings, screen sharing, multi-user mouse on the same screen, virtual images, etc., which can meet the communication needs of enterprises in various scenarios.
 
-- Device settings, device selection, device adjustment
-- Microphone, camera, screen sharing
-- Room management
-- User status management, status grouping
-- Avatar (Virtual role)
-- Wave reminder
-- Chat and file transfer
-- Internationalization
-- e2ee encryption, privacy protection
+The core advantage of VoceSpace lies in its strong security and privacy protection. Through enterprise-level encryption technology, VoceSpace ensures that user data is fully controllable, and everything from meeting content to file transfer is end-to-end encrypted (E2EE), effectively preventing data leakage and unauthorized access. In addition, VoceSpace provides a private deployment option, allowing enterprises to host the platform under their own subdomains and use their own logos and brands, further enhancing the data control and brand image of the enterprise.
+
+## What scenarios is VoceSpace suitable for
+
+VoceSpace is suitable for a variety of enterprise | personal scenarios, including but not limited to:
+
+1. **Remote office**: With the popularity of remote work mode, enterprises need a stable and secure communication platform to support collaboration between employees. VoceSpace provides high-definition video and audio conferencing functions, supports screen sharing and multi-user mouse operation on the same screen, enabling remote teams to communicate and collaborate efficiently, just like in the office.
+2. **Online education**: Educational institutions can use VoceSpace for online teaching, and enhance students' learning experience through virtual images and interactive functions. At the same time, VoceSpace's privacy protection function ensures the security of students' and teachers' personal information.
+3. **Medical consultation**: In the medical field, VoceSpace's E2EE encryption and privacy protection functions are particularly important. Doctors can use VoceSpace to conduct remote consultations with patients to ensure that the patient's medical information is not leaked.
+4. **Corporate training**: Companies can use VoceSpace for internal training and seminars, support a large number of users online at the same time, provide real-time interaction and file transfer functions, and improve training effectiveness.
+5. **International conference**: VoceSpace supports internationalization and can meet the communication needs of multinational companies or organizations, ensuring that users in different languages ​​and regions can use the platform smoothly.
+6. **Game playing**: Use VoceSpace when playing team games to feel the feeling of teammates sitting next to you.
+
+## Comparison between VoceSpace and other conference software
+
+### 1. **Comparison with Zoom**
+
+| Functions/Features        | VoceSpace                                                                                                     | Zoom                                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Data security**         | Enterprise-level E2EE encryption, private deployment, full control of data                                    | Provides E2EE encryption, but data storage and management are controlled by Zoom                  |
+| **Brand customization**   | Supports corporate logo and brand customization                                                               | Limited brand customization options                                                               |
+| **Feature richness**      | Supports advanced features such as avatar, multi-user mouse on the same screen, unlimited room duration, etc. | The functions are relatively basic, mainly focusing on video and audio conferencing               |
+| **Deployment method**     | Private deployment, full enterprise control                                                                   | Cloud deployment, data storage on Zoom servers                                                    |
+| **International support** | Supports multiple languages ​​                                                                                | Supports multiple languages, but the degree of customization is low                               |
+| **Price**                 | Basic version is free, premium version is $499/year, and a certificate worth $499 is given                    | The price varies by package, the basic version is free, and the premium version is more expensive |
+
+### 2. **Comparison with Tencent Conference**
+
+| Functions/Features               | VoceSpace                                                                                                    | Tencent Conference                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| **Data Security**                | Enterprise-level E2EE encryption, private deployment, full control of data                                   | Provides E2EE encryption, but data storage and management are controlled by Tencent |
+| **Brand Customization**          | Supports corporate logo and brand customization                                                              | Limited brand customization options                                                 |
+| **Feature Richness**             | Supports advanced features such as avatars, multi-user mouse on the same screen, and unlimited room duration | The functions are relatively basic, mainly focusing on video and audio conferencing |
+| **Deployment method**            | Private deployment, full enterprise control                                                                  | Cloud deployment, data stored on Tencent servers                                    |
+| **Internationalization support** | Supports multiple languages ​​                                                                               | Mainly for the Chinese market, limited internationalization support                 |
+| **Price**                        | Basic version is free, premium version is $499/year, and a certificate worth $499 is given                   | Basic version is free, premium version is more expensive                            |
+
+### 3. **Comparison with LiveKit**
+
+LiveKit is an open source real-time communication framework. VoceSpace is built on LiveKit, but VoceSpace provides more enterprise-level functions and security features.
+
+| Function/Feature                 | VoceSpace                                                                                                            | LiveKit                                                                                              |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Data security**                | Enterprise-level E2EE encryption, private deployment, full control of data                                           | Open source framework, enterprises need to implement encryption and security measures by themselves  |
+| **Brand customization**          | Support corporate logo and brand customization                                                                       | As a framework, enterprises need to develop customized functions by themselves                       |
+| **Functional richness**          | Support advanced functions such as virtual image, multi-user mouse on the same screen, unlimited room duration, etc. | Provide basic video and audio communication functions                                                |
+| **Deployment method**            | Private deployment, full control by the enterprise                                                                   | Open source framework, enterprises need to deploy and manage by themselves                           |
+| **Internationalization support** | Support multiple languages ​​                                                                                        | As a framework, enterprises need to implement internationalization support by themselves             |
+| **Price**                        | Basic version is free, advanced version is $499/year, and a certificate worth $499 is given                          | Open source is free, but enterprises need to invest in development and operation costs by themselves |
+
+## Advantages of VoceSpace
+
+1. **Data security and privacy protection**: VoceSpace Provide enterprise-level E2EE encryption to ensure that data is fully controllable. From meeting content to file transfer, everything is strictly encrypted to effectively prevent data leakage.
+2. **Brand customization**: Enterprises can host the platform under their own subdomains and use their own logos and brands to enhance brand image and user trust.
+3. **Rich functions**: VoceSpace provides a series of advanced functions, such as virtual images, multi-user mouse on the same screen, privacy blur, etc., to meet the needs of enterprises in various scenarios.
+4. **Private deployment**: Support private deployment, enterprises can fully control the platform's operating environment and data storage, further enhancing data security and privacy protection.
+5. **International support**: Support multiple languages ​​to meet the communication needs of multinational enterprises or organizations.
+6. **High cost performance**: The basic version is free, and the professional version of VoceSpace provides a package of $499/year, and a certificate worth $499 is given, providing enterprises with a cost-effective choice.
+7. **Unlimited duration, unlimited rooms**: VoceSpace does not limit the duration of use and the number of rooms used.
+
+## Free Deployment
+
+VoceSpace is easy to deploy. We provide a one-click deployment of Docker images. For personal use, you only need to calculate the server cost, and even servers with poor configuration can be used smoothly.
+
+For details, please refer to: [VoceSpace Deployment Manual](/doc/deploy/overview)
+
+## Why Choose VoceSpace
+
+VoceSpace is a secure communication platform designed for modern enterprises. It not only provides powerful functions, but also ensures data security and privacy protection. Currently, VoceSpace is in the early testing stage. We provide early test users with a certificate worth $499, which can be installed and used for free for one year. We hope that users can provide valuable feedback to help us continuously improve the product.
+
+- **Data Security**: Enterprise-level E2EE encryption ensures that data is fully controllable.
+
+- **Brand Customization**: Supports corporate logo and brand customization to enhance brand image.
+
+- **Rich Functions**: Provides advanced functions such as virtual images and multi-user mouse on the same screen.
+
+- **Private Deployment**: Enterprises can fully control the platform's operating environment and data storage.
+- **International support**: Support multiple languages ​​to meet the needs of multinational enterprises.
+- **High cost performance**: Basic version is free, premium version is $499/year, with a $499 certificate, free installation and use for one year.
+
+We sincerely invite you to join the early test of VoceSpace and experience this secure communication platform designed for enterprises. Your feedback will be crucial to us and help us build a better product. Contact us now to start your VoceSpace journey!
+
+---
+
+:::INFO
+VoceSpace is currently in the early stages of development, and many features are still being planned and implemented. We welcome feedback and collaboration from the community! If you have any suggestions for us, need to report issues, or want to add features, please contact us through the following channels:
+:::
+
+- **GitHub**: [https://github.com/Privoce/vocespace-client](https://github.com/Privoce/vocespace-client)
+- **Demo**: [demo](https://space.voce.chat/)
+- **Collaboration Email**: `han@privoce.com`

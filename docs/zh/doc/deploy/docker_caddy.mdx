@@ -1,0 +1,233 @@
+import { Tab, Tabs } from "@theme";
+
+# Docker + Caddy
+
+Caddy 比 Nginx 更简单，因为它可以自动申请证书。
+
+您需要先启动项目容器，然后再安装和配置 Caddy，否则证书申请可能会失败。
+
+## 1. 使用 Docker 本地部署应用
+
+### 步骤说明
+
+在开始配置 Nginx 反向代理前，我们需要先将后端服务容器运行起来。
+
+> [!INFO]
+> 详细部署方式请参考文档：[本地部署指南](/zh/doc/deploy/local_docker)
+
+### 示例命令
+
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -e SERVER_NAME=your.server.name \
+  -e HOST=your.ip \
+  -e LIVEKIT_URL=wss://your.server.name \
+  --name vocespace \
+  privoce/vocespace:latest
+```
+
+> [!NOTE]
+>
+> * `-p 3000:3000`：将容器的 3000 端口映射至宿主机 3000 端口。
+> * `-e SERVER_NAME=your.server.name`：设置服务运行的主机名，供应用内部识别。
+> * `-e HOST=your.ip=your.ip`: 设置服务器ip host
+> * `-e LIVEKIT_URL=wss://your.server.name`: wss服务连接地址
+> * `--name`：给容器命名，便于后续管理。
+
+
+## 2. 安装并配置Caddy
+
+> [!INFO]
+>
+> 以下为 Ubuntu/Debian 安装方式
+>
+> 其他类型请参考：[Caddy install](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
+
+### 2.1 安装Caddy
+
+```bash
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install caddy
+```
+
+### 2.2 配置Caddy
+
+Caddy支持多种方式进行配置，同时也直接支持使用nginx conf的方式
+
+> [!WARNING]
+>
+> 请确保您已经购买了域名并进行了DNS解析
+
+```bash
+vim /etc/caddy/Caddyfile
+```
+
+```nginx
+your.server.name {
+    # webrtc
+    handle /rtc* {
+        reverse_proxy localhost:7880 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /socket.io/* {
+        reverse_proxy localhost:3000 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # main app https
+    handle {
+        reverse_proxy localhost:3000 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # log optional
+    #log {
+    #    output file /var/log/caddy/your.server.name.log
+    #    level DEBUG
+    #}
+}
+```
+
+## 3. 启动 livekit-server
+
+和本地部署一样您同样需要启动livekit-server来支持webrtc, 您可以选择和本地部署一样下载livekit进行启动，也可以使用docker部署
+
+<Tabs>
+  <Tab label="本地">
+    ### 下载 livekit-server
+    
+    ```bash
+    curl -sSL https://get.livekit.io | bash
+    ```
+    
+    完成下载后一般都会在`/usr/local/bin/livekit-server`
+
+    ### 创建配置
+    我们提供了一份极简配置帮助您进行快速部署，首先创建配置文件`vim /etc/livekit.yml`
+    ```yml
+    port: 7880
+    bind_addresses:
+        - "0.0.0.0"
+    rtc:
+        tcp_port: 7881
+        port_range_start: 50000
+        port_range_end: 60000
+        use_external_ip: true
+        enable_loopback_candidate: false
+    turn:
+        enabled: false
+        domain: turn.vocespace.xyz
+        tls_port: 5349
+        udp_port: 3478
+        external_tls: true
+    keys:
+      devkey: secret
+    ```
+
+    ### 使用 nohup 后台启动
+
+    通过使用 nohup 您可以在后台启动livekit-server并将日志输出到`/usr/local/bin/logs/livekit_output.log`以便于查看
+    
+    ```bash
+    nohup /usr/local/bin/livekit-server --config /etc/livekit.yml > /usr/local/bin/logs/livekit_output.log 2>&1 &
+    ```
+
+
+  </Tab>
+  <Tab label="Docker">
+  ### docker 下载 livekit-server
+  ```bash
+  docker pull livekit/livekit-server:latest
+  ```
+    ### 创建配置
+    我们提供了一份极简配置帮助您进行快速部署，首先创建配置文件`vim /etc/livekit.yml`
+    ```yml
+    port: 7880
+    bind_addresses:
+        - "0.0.0.0"
+    rtc:
+        tcp_port: 7881
+        port_range_start: 50000
+        port_range_end: 60000
+        use_external_ip: true
+        enable_loopback_candidate: false
+    turn:
+        enabled: false
+        domain: turn.vocespace.xyz
+        tls_port: 5349
+        udp_port: 3478
+        external_tls: true
+    keys:
+      devkey: secret
+    ```
+
+    ### 启动livekit-server
+
+    同样使用配置文件
+
+    ```bash
+    docker run -d \
+      --network host \
+      --name livekit-server \
+      -v /etc/livekit.yml:/etc/livekit.yaml \
+      livekit/livekit-server \
+      --config /etc/livekit.yaml
+    ```
+    您也可以选择不使用host的方式，进行逐个端口映射，但这样会花费很长时间
+    ```bash
+    docker run -d \
+      --name livekit-server \
+      -p 7880:7880 \
+      -p 50000-60000:50000-60000/udp \
+      livekit/livekit-server \
+      --config /etc/livekit.yaml
+    ```
+  </Tab>
+</Tabs>
+
+## 云服务器说明
+
+### 配置安全组/防火墙
+
+在使用云服务器时，例如：阿里云，腾讯云，Google Cloud等，您需要对服务器等安全组/防火墙进行相关配置
+
+| port | type | ingress/egress | allow ip |
+|--|--|--|--|
+| 3000 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 3000 | tcp | egress | 0.0.0.0/0 Ipv4 |
+| 7880 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 7881 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 80 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 443 |tcp | ingress | 0.0.0.0/0 Ipv4 |
+|50000~60000| udp | ingress | 0.0.0.0/0 Ipv4 |
+
+## Caddy重启并开机自启动
+
+```bash
+systemctl stop caddy
+systemctl enabled caddy
+systemctl start caddy
+```

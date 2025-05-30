@@ -1,0 +1,237 @@
+import { Tab, Tabs } from "@theme";
+
+# Docker + Caddy
+
+Caddy is simpler than Nginx because it can automatically apply for certificates.
+
+You need to start the project container first, then install and configure Caddy, otherwise the certificate application may fail.
+
+## 1. Use Docker to deploy applications locally
+
+### Steps
+
+Before starting to configure Nginx reverse proxy, we need to run the backend service container first.
+
+> [!INFO]
+> For detailed deployment methods, please refer to the document: [Local Deployment Guide](/zh/doc/deploy/local_docker)
+
+### Example command
+
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -e SERVER_NAME=your.server.name \
+  -e HOST=your.ip \
+  -e LIVEKIT_URL=wss://your.server.name \
+  --name vocespace \
+  privoce/vocespace:latest
+```
+
+> [!NOTE]
+>
+> * `-p 3000:3000`: Map the container's port 3000 to the host's port 3000.
+> * `-e SERVER_NAME=your.server.name`: Set the host name where the service runs for internal identification.
+> * `-e HOST=your.ip=your.ip`: Set the server ip host
+> * `-e LIVEKIT_URL=wss://your.server.name`: wss service connection address
+> * `--name`: Name the container for easy subsequent management.
+
+
+## 2. Install and configure Caddy
+
+> [!INFO]
+>
+> The following is the installation method for Ubuntu/Debian
+>
+> For other types, please refer to: [Caddy install](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
+
+### 2.1 Install Caddy
+
+```bash
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install caddy
+```
+
+### 2.2 Configure Caddy
+
+Caddy supports multiple configuration methods, and also directly supports the use of nginx conf
+
+> [!WARNING]
+>
+> Please make sure you have purchased the domain name and performed DNS resolution
+
+
+```bash
+vim /etc/caddy/Caddyfile
+```
+
+```nginx
+your.server.name {
+    # webrtc
+    handle /rtc* {
+        reverse_proxy localhost:7880 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /socket.io/* {
+        reverse_proxy localhost:3000 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # main app https
+    handle {
+        reverse_proxy localhost:3000 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # log optional
+    #log {
+    #    output file /var/log/caddy/your.server.name.log
+    #    level DEBUG
+    #}
+}
+```
+
+
+
+
+## 3. Start livekit-server
+
+Like local deployment, you also need to start livekit-server to support webrtc. You can choose to download livekit and start it as in local deployment, or you can use docker deployment
+
+<Tabs>
+  <Tab label="Local">
+    ### Download livekit-server
+    
+    ```bash
+    curl -sSL https://get.livekit.io | bash
+    ```
+    
+   After the download is completed, it will usually be in `/usr/local/bin/livekit-server`
+
+    ### Create configuration
+    We provide a minimal configuration to help you deploy quickly. First, create the configuration file `vim /etc/livekit.yml`
+    ```yml
+    port: 7880
+    bind_addresses:
+        - "0.0.0.0"
+    rtc:
+        tcp_port: 7881
+        port_range_start: 50000
+        port_range_end: 60000
+        use_external_ip: true
+        enable_loopback_candidate: false
+    turn:
+        enabled: false
+        domain: turn.vocespace.xyz
+        tls_port: 5349
+        udp_port: 3478
+        external_tls: true
+    keys:
+      devkey: secret
+    ```
+
+    ### Start in the background using nohup
+
+    By using nohup you can start livekit-server in the background and output the logs to `/usr/local/bin/logs/livekit_output.log` for easy viewing
+    
+    ```bash
+    nohup /usr/local/bin/livekit-server --config /etc/livekit.yml > /usr/local/bin/logs/livekit_output.log 2>&1 &
+    ```
+
+
+  </Tab>
+  <Tab label="Docker">
+  ### docker pull livekit-server
+  ```bash
+  docker pull livekit/livekit-server:latest
+  ```
+    ### Create configuration
+    We provide a minimal configuration to help you deploy quickly. First, create the configuration file `vim /etc/livekit.yml`
+    ```yml
+    port: 7880
+    bind_addresses:
+        - "0.0.0.0"
+    rtc:
+        tcp_port: 7881
+        port_range_start: 50000
+        port_range_end: 60000
+        use_external_ip: true
+        enable_loopback_candidate: false
+    turn:
+        enabled: false
+        domain: turn.vocespace.xyz
+        tls_port: 5349
+        udp_port: 3478
+        external_tls: true
+    keys:
+      devkey: secret
+    ```
+
+    ### Run livekit-server
+
+    Also use the configuration file
+
+    ```bash
+    docker run -d \
+      --network host \
+      --name livekit-server \
+      -v /etc/livekit.yml:/etc/livekit.yaml \
+      livekit/livekit-server \
+      --config /etc/livekit.yaml
+    ```
+    You can also choose not to use the host method and map ports one by one, but this will take a long time
+    ```bash
+    docker run -d \
+      --name livekit-server \
+      -p 7880:7880 \
+      -p 50000-60000:50000-60000/udp \
+      livekit/livekit-server \
+      --config /etc/livekit.yaml
+    ```
+  </Tab>
+</Tabs>
+
+## Cloud Server Description
+
+### Configure Security Group/Firewall
+
+When using cloud servers, such as Alibaba Cloud, Tencent Cloud, Google Cloud, etc., you need to configure the security group/firewall of the server.
+
+| port        | type | ingress/egress | allow ip       |
+| ----------- | ---- | -------------- | -------------- |
+| 3000        | tcp  | ingress        | 0.0.0.0/0 Ipv4 |
+| 3000        | tcp  | egress         | 0.0.0.0/0 Ipv4 |
+| 7880        | tcp  | ingress        | 0.0.0.0/0 Ipv4 |
+| 7881        | tcp  | ingress        | 0.0.0.0/0 Ipv4 |
+| 80          | tcp  | ingress        | 0.0.0.0/0 Ipv4 |
+| 443         | tcp  | ingress        | 0.0.0.0/0 Ipv4 |
+| 50000~60000 | udp  | ingress        | 0.0.0.0/0 Ipv4 |
+
+### Restart and enabled Caddy
+
+```bash
+systemctl stop caddy
+systemctl enabled caddy
+systemctl start caddy
+```

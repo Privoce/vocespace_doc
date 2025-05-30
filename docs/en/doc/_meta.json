@@ -8,5 +8,10 @@
         "type": "dir",
         "name": "deploy",
         "label": "Deploy"
+    },
+    {
+        "type": "dir",
+        "name": "log",
+        "label": "Log"
     }
 ]
