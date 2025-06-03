@@ -2,7 +2,6 @@ import * as path from "node:path";
 import { defineConfig } from "rspress/config";
 
 export default defineConfig({
-  base: "/vocespace_doc",
   root: path.join(__dirname, "docs"),
   title: "VoceSpace Doc",
   description: "Documentation for VoceSpace",
