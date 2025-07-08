@@ -1,8 +1,10 @@
 [
     "overview",
+    "quickstart",
     "local_docker",
     "docker_nginx",
     "docker_caddy",
     "flex",
-    "help"
+    "help",
+    "scripts"
 ]

@@ -1,0 +1,127 @@
+import { Tab, Tabs } from "@theme";
+
+# VoceSpace QuickStart
+
+本文档说明如何使用提供的自动化脚本来部署 VoceSpace。
+
+## 脚本文件
+
+- `vocespace_deploy.sh` - 适用于 Linux 和 macOS 系统
+- `vocespace_deploy.bat` - 适用于 Windows 系统
+
+> [!WARNING]
+> **该部署脚本只适合本地快速部署!**
+> 1. **首次运行**: 容器启动后会自动下载依赖，需要等待片刻
+> 2. **端口占用**: 确保端口 3000 和 7880 没有被其他应用占用
+> 3. **网络访问**: 本地部署仅支持本地访问，如需公网访问请参考其他部署方式
+> 4. **权限问题**: Linux/macOS 系统可能需要 sudo 权限来运行 Docker 命令
+
+
+## 先决条件
+
+1. Docker
+2. brew (macOS)
+
+## 基本用法
+
+在开始前对应您的操作系统类型下载对应的文件
+- Linux/macOS: https://vocespace.com/local_deploy/local_deploy_zh.sh
+- Windows: https://vocespace.com/local_deploy/local_deploy_zh.bat
+- README: https://vocespace.com/local_deploy/README_zh.md
+- README index.html: https://vocespace.com/local_deploy/index_zh.html
+
+当然您也可以直接在我们的文档网站进行复制: [帮助-脚本](./help#本地部署脚本)
+
+<Tabs>
+  <Tab label="Linux/macOS">
+    ```bash
+    # 基本部署
+    sh ./vocespace_deploy.sh
+
+    # 设置分辨率为 4K
+    sh ./vocespace_deploy.sh -r 4k
+
+    # 设置自定义环境变量
+    sh ./vocespace_deploy.sh -e CUSTOM_VAR=<value>
+    ```
+  </Tab>
+  <Tab label="Windows">
+    ```cmd
+    # 基本部署
+    vocespace_deploy.bat
+
+    # 设置分辨率为 4K
+    vocespace_deploy.bat -r 4k
+
+    # 设置自定义环境变量
+    vocespace_deploy.bat -e CUSTOM_VAR=<value>
+    ```
+  </Tab>
+</Tabs>
+
+## 参数说明
+
+### 分辨率选项 (-r, --resolution)
+
+设置 VoceSpace 的默认分辨率：
+
+- `4k` - 4K 分辨率
+- `2k` - 2k 分辨率
+- `1080p` - 1080p 分辨率
+- `720p` - 720p 分辨率
+- `480p` - 480p 分辨率
+
+当使用分辨率选项时，脚本会自动设置 `NEXT_PUBLIC_RESOLUTION` 环境变量。
+
+### 环境变量选项 (-e, --env)
+
+设置自定义环境变量，格式为 `KEY=VALUE`。可以多次使用此选项来设置多个环境变量。
+
+常用环境变量：
+
+- `LIVEKIT_API_KEY` - LiveKit API 密钥
+- `LIVEKIT_API_SECRET` - LiveKit API 密钥
+- `LIVEKIT_URL` - LiveKit 连接地址
+- `NEXT_PUBLIC_BASE_PATH` - 地址前缀
+- `PORT` - 端口IP
+- `HOST` - 主机地址
+
+## 脚本功能
+
+这些脚本会自动执行以下步骤：
+
+1. **检查 Docker 安装**
+   - 验证 Docker 是否已安装
+   - 显示 Docker 版本信息
+
+2. **安装 LiveKit Server**
+   - macOS: 通过 Homebrew 安装
+   - Linux: 通过官方安装脚本安装
+   - Windows: 提供手动安装指引
+
+3. **检测系统架构**
+   - 自动检测 CPU 架构（AMD64/ARM64）
+   - 选择对应的 Docker 镜像
+
+4. **拉取 Docker 镜像**
+   - AMD64: `privoce/vocespace:latest`
+   - ARM64: `privoce/vocespace:latest_arm`
+
+5. **启动 VoceSpace 容器**
+   - 映射端口 3000:3000
+   - 应用用户指定的环境变量
+   - 处理现有容器的冲突
+
+6. **启动 LiveKit Server**
+   - 在开发模式下启动
+   - 绑定到所有网络接口 (0.0.0.0)
+
+7. **显示部署状态**
+   - 容器运行状态
+   - 访问地址和端口信息
+   - 日志查看指令
+## 访问应用
+
+部署完成后，您可以通过以下地址访问 VoceSpace：
+
+- **VoceSpace 应用**: http://localhost:3000 ｜ http://127.0.0.1:3000

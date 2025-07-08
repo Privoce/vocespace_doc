@@ -1,3 +1,5 @@
+import { Tab, Tabs } from "@theme";
+
 # Help
 
 ## Check your own Linux architecture
@@ -33,8 +35,620 @@ arch
 - If the output is `aarch64` or `arm64`, it means the system is based on ARM64 architecture.
 - If the output is `armv7l` or similar, it means the system is based on ARMv7 architecture.
 
-## Docker network connection timeout
+## Local deployment scripts
 
+<Tabs>
+  <Tab label="Linux/macOS">
+    ```shell
+    #!/bin/bash
+
+    # VoceSpace local deployment automation script
+    # Applicable to macOS and Linux systems
+
+    set -e # Exit when encountering an error
+
+    # Default environment variables
+    RESOLUTION=""
+    CUSTOM_ENV_VARS=()
+
+    # Display usage help
+    show_help() {
+        echo "============================================="
+        echo "VoceSpace local deployment automation script"
+        echo "==========================================="
+        echo ""
+        echo "Usage: $0 [options]"
+        echo ""
+        echo "Options:"
+        echo " -r, --resolution RESOLUTION Set resolution (e.g.: 4k, 1080p, 720p)"
+        echo " -e, --env KEY=VALUE Set custom environment variables"
+        echo " -h, --help Show this help information"
+        echo ""
+        echo "Example:"
+        echo " $0 -r 4k"
+        echo " $0 --resolution 1080p"
+        echo " $0 -r 4k -e CUSTOM_VAR=value"
+        echo " $0 -e NEXT_PUBLIC_RESOLUTION=4k -e ANOTHER_VAR=test"
+        echo ""
+        echo "Supported resolutions:"
+        echo "  - 4k"
+        echo "  - 2k"
+        echo "  - 1080p"
+        echo "  - 720p"
+        echo "  - 480p"
+        echo ""
+    }
+
+    # Parsing command line arguments
+    parse_args() {
+        while [[ $# -gt 0 ]]; do
+            case $1 in
+                -r|--resolution)
+                    RESOLUTION="$2"
+                    shift 2
+                    ;;
+                -e|--env)
+                    CUSTOM_ENV_VARS+=("$2")
+                    shift 2
+                    ;;
+                -h|--help)
+                    show_help
+                    exit 0
+                    ;;
+                *)
+                    echo "❌ Unknown parameter: $1"
+                    echo "Use $0 --help to see usage information"
+                    exit 1
+                    ;;
+            esac
+        done
+    }
+
+    echo "=========================================="
+    echo "VoceSpace local deployment automation script"
+    echo "=========================================="
+
+    # Detect operating system
+    OS=$(uname -s)
+    ARCH=$(uname -m)
+
+    echo "Detected OS: $OS"
+    echo "Detected Architecture: $ARCH"
+
+    # Function: Check if a command exists
+    check_command() {
+        if ! command -v "$1" &> /dev/null; then
+            echo "❌ $1 is not installed"
+            return 1
+        else
+            echo "✅ $1 is installed"
+            return 0
+        fi
+    }
+
+    # Function: Check if Docker is installed
+    check_docker() {
+        if check_command docker; then
+            echo "Docker version: $(docker --version)"
+            return 0
+        else
+            echo "❌ Docker is not installed, please install Docker first"
+            echo "Please visit the following link to install Docker:"
+            case $OS in
+                "Darwin")
+                    echo "  macOS: https://docs.docker.com/desktop/install/mac-install/"
+                    ;;
+                "Linux")
+                    echo "  Linux: https://docs.docker.com/engine/install/"
+                    ;;
+                *)
+                    echo "  other: https://docs.docker.com/get-docker/"
+                    ;;
+            esac
+            return 1
+        fi
+    }
+
+    # install LiveKit Server
+    install_livekit() {
+        echo "=========================================="
+        echo "Install LiveKit Server"
+        echo "=========================================="
+        
+        if check_command livekit-server; then
+            echo "LiveKit Server is installed"
+            return 0
+        fi
+        
+        case $OS in
+            "Darwin")
+                echo "Installing LiveKit Server on macOS..."
+                if check_command brew; then
+                    brew update && brew install livekit
+                else
+                    echo "❌ Homebrew is not installed, please install Homebrew or manually install LiveKit Server"
+                    echo "Homebrew installation: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+                    return 1
+                fi
+                ;;
+            "Linux")
+                echo "Installing LiveKit Server on Linux..."
+                curl -sSL https://get.livekit.io | bash
+                ;;
+            *)
+                echo "❌ Unsupported operating system: $OS"
+                echo "Please manually install LiveKit Server: https://github.com/livekit/livekit/releases"
+                return 1
+                ;;
+        esac
+    }
+
+    # Function: Get Docker image
+    get_docker_image() {
+        case $ARCH in
+            "x86_64"|"amd64")
+                echo "privoce/vocespace:latest"
+                ;;
+            "arm64"|"aarch64")
+                echo "privoce/vocespace:latest_arm"
+                ;;
+            *)
+                echo "❌ Unsupported architecture: $ARCH"
+                echo "Supported architectures: x86_64, amd64, arm64, aarch64"
+                exit 1
+                ;;
+        esac
+    }
+
+    # Function: Pull VoceSpace image
+    pull_vocespace_image() {
+        echo "=========================================="
+        echo "Pulling VoceSpace Docker image"
+        echo "=========================================="
+        
+        IMAGE=$(get_docker_image)
+        echo "Pulling image: $IMAGE"
+
+        docker pull "$IMAGE"
+        echo "✅ Image pulled successfully"
+    }
+
+    # Function: Start VoceSpace container
+    start_vocespace_container() {
+        echo "=========================================="
+        echo "Starting VoceSpace container"
+        echo "=========================================="
+        
+        IMAGE=$(get_docker_image)
+        CONTAINER_NAME="vocespace"
+
+        # Build environment variable arguments
+        ENV_ARGS=()
+
+        # Add resolution environment variable
+        if [[ -n "$RESOLUTION" ]]; then
+            ENV_ARGS+=("-e" "NEXT_PUBLIC_RESOLUTION=$RESOLUTION")
+            echo "Setting resolution: $RESOLUTION"
+        fi
+
+        # Add custom environment variables
+        for env_var in "${CUSTOM_ENV_VARS[@]}"; do
+            ENV_ARGS+=("-e" "$env_var")
+            echo "Setting environment variable: $env_var"
+        done
+
+        # Check if the container already exists
+        if docker ps -a --format "table {{.Names}}" | grep -q "^$CONTAINER_NAME$"; then
+            echo "Detected existing container $CONTAINER_NAME"
+            read -p "Do you want to stop and remove the existing container? (y/n): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                echo "Stopping and removing existing container..."
+                docker stop "$CONTAINER_NAME" 2>/dev/null || true
+                docker rm "$CONTAINER_NAME" 2>/dev/null || true
+            else
+                echo "Operation cancelled"
+                return 1
+            fi
+        fi
+
+        echo "Starting new container..."
+        if [[ ${#ENV_ARGS[@]} -gt 0 ]]; then
+            echo "Using environment variables: ${ENV_ARGS[*]}"
+            docker run -d \
+                -p 3000:3000 \
+                --name "$CONTAINER_NAME" \
+                "${ENV_ARGS[@]}" \
+                "$IMAGE"
+        else
+            docker run -d \
+                -p 3000:3000 \
+                --name "$CONTAINER_NAME" \
+                "$IMAGE"
+        fi
+
+        echo "✅ VoceSpace container started successfully"
+        echo "Container name: $CONTAINER_NAME"
+        echo "Access URL: http://localhost:3000"
+    }
+
+    # Function: Start LiveKit Server
+    start_livekit_server() {
+        echo "=========================================="
+        echo "Starting LiveKit Server"
+        echo "=========================================="
+
+        echo "Checking if LiveKit Server is running..."
+        if pgrep -f "livekit-server" > /dev/null; then
+            echo "⚠️  LiveKit Server is already running"
+            read -p "Do you want to restart LiveKit Server? (y/n): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                echo "Stopping existing LiveKit Server..."
+                pkill -f "livekit-server" || true
+                sleep 2
+            else
+                echo "Keeping existing LiveKit Server running"
+                return 0
+            fi
+        fi
+
+        echo "Starting LiveKit Server..."
+        echo "Note: LiveKit Server will run in the background"
+        echo "To stop it, use: pkill -f livekit-server"
+
+        nohup livekit-server --dev --bind 0.0.0.0 > livekit-server.log 2>&1 &
+        
+        sleep 3
+        
+        if pgrep -f "livekit-server" > /dev/null; then
+            echo "✅ LiveKit Server started successfully"
+            echo "Log file: $(pwd)/livekit-server.log"
+        else
+            echo "❌ LiveKit Server failed to start"
+            echo "Please check the log file: $(pwd)/livekit-server.log"
+            return 1
+        fi
+    }
+
+    # Function: Show Status
+    show_status() {
+        echo "=========================================="
+        echo "Deployment Status Check"
+        echo "=========================================="
+        
+        echo "Docker Container Status:"
+        docker ps --filter "name=vocespace" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        
+        echo ""
+        echo "LiveKit Server Status:"
+        if pgrep -f "livekit-server" > /dev/null; then
+            echo "✅ LiveKit Server is running"
+        else
+            echo "❌ LiveKit Server is not running"
+        fi
+        
+        echo ""
+        echo "=========================================="
+        echo "Access Information"
+        echo "=========================================="
+        echo "VoceSpace App: http://localhost:3000"
+        echo "LiveKit Server: ws://localhost:7880"
+        echo ""
+        echo "To view container logs: docker logs vocespace"
+        echo "To view LiveKit logs: tail -f livekit-server.log"
+    }
+
+    # Main function
+    main() {
+        # Parse command line arguments
+        parse_args "$@"
+        
+        echo "Starting deployment process..."
+        
+        # Show configuration information
+        if [[ -n "$RESOLUTION" ]] || [[ ${#CUSTOM_ENV_VARS[@]} -gt 0 ]]; then
+            echo "=========================================="
+            echo "Configuration Information"
+            echo "=========================================="
+            [[ -n "$RESOLUTION" ]] && echo "Resolution: $RESOLUTION"
+            for env_var in "${CUSTOM_ENV_VARS[@]}"; do
+                echo "Environment Variable: $env_var"
+            done
+            echo ""
+        fi
+
+        # Check Docker
+        if ! check_docker; then
+            exit 1
+        fi
+
+        # Install LiveKit Server
+        if ! install_livekit; then
+            echo "❌ LiveKit Server installation failed"
+            exit 1
+        fi
+
+        # Pull Docker image
+        if ! pull_vocespace_image; then
+            echo "❌ Docker image pull failed"
+            exit 1
+        fi
+
+        # Start container
+        if ! start_vocespace_container; then
+            echo "❌ Container startup failed"
+            exit 1
+        fi
+
+        # Start LiveKit Server
+        if ! start_livekit_server; then
+            echo "❌ LiveKit Server startup failed"
+            exit 1
+        fi
+        
+        echo ""
+        echo "Waiting for services to start..."
+        sleep 5
+
+        # Show status
+        show_status
+        
+        echo ""
+        echo "=========================================="
+        echo "🎉 Deploy finish!"
+        echo "=========================================="
+        echo "Please visit http://localhost:3000 in your browser"
+        echo "If you encounter any issues, please check the relevant log files"
+    }
+
+    # Run main function
+    main "$@"
+
+    ```
+  </Tab>
+  <Tab label="Windows">
+    ```shell
+    @echo off
+    setlocal EnableDelayedExpansion
+
+    REM VoceSpace local deployment automation script (Windows)
+    REM Applicable to Windows systems
+
+    REM Default environment variables
+    set RESOLUTION=
+    set ENV_VARS=
+
+    REM Show usage help
+    :show_help
+    echo ===========================================
+    echo VoceSpace local deployment automation script (Windows)
+    echo ============================================
+    echo.
+    echo usage: %~nx0 [options]
+    echo.
+    echo options:
+    echo -r, --resolution RESOLUTION Set resolution (e.g.: 4k, 1080p, 720p)
+    echo -e, --env KEY=VALUE Set custom environment variables
+    echo -h, --help Display this help information
+    echo.
+    echo Examples:
+    echo %~nx0 -r 4k
+    echo %~nx0 --resolution 1080p
+    echo %~nx0 -r 4k -e CUSTOM_VAR=value
+    echo %~nx0 -e NEXT_PUBLIC_RESOLUTION=4k
+    echo.
+    echo Supported resolutions:
+    echo   - 4k
+    echo   - 2k
+    echo   - 1080p
+    echo   - 720p
+    echo   - 480p
+    echo.
+    goto :eof
+
+    REM Parsing command line arguments
+    :parse_args
+    if "%~1"=="" goto start_main
+    if "%~1"=="-h" goto show_help
+    if "%~1"=="--help" goto show_help
+    if "%~1"=="-r" (
+        set RESOLUTION=%~2
+        shift
+        shift
+        goto parse_args
+    )
+    if "%~1"=="--resolution" (
+        set RESOLUTION=%~2
+        shift
+        shift
+        goto parse_args
+    )
+    if "%~1"=="-e" (
+        if "!ENV_VARS!"=="" (
+            set ENV_VARS=-e %~2
+        ) else (
+            set ENV_VARS=!ENV_VARS! -e %~2
+        )
+        shift
+        shift
+        goto parse_args
+    )
+    if "%~1"=="--env" (
+        if "!ENV_VARS!"=="" (
+            set ENV_VARS=-e %~2
+        ) else (
+            set ENV_VARS=!ENV_VARS! -e %~2
+        )
+        shift
+        shift
+        goto parse_args
+    )
+    echo ❌ Unknown parameter: %~1
+    echo Use %~nx0 --help to see usage information
+    exit /b 1
+
+    :start_main
+    REM Call parameter parsing
+    call :parse_args %*
+
+    echo ==========================================
+    echo VoceSpace local deployment automation script (Windows)
+    echo ==========================================
+
+    REM If resolution is set, add to environment variables
+    if not "%RESOLUTION%"=="" (
+        echo Setting resolution: %RESOLUTION%
+        if "!ENV_VARS!"=="" (
+            set ENV_VARS=-e NEXT_PUBLIC_RESOLUTION=%RESOLUTION%
+        ) else (
+            set ENV_VARS=!ENV_VARS! -e NEXT_PUBLIC_RESOLUTION=%RESOLUTION%
+        )
+    )
+
+    REM Show environment variables to be used
+    if not "!ENV_VARS!"=="" (
+        echo The following environment variables will be used: !ENV_VARS!
+    )
+
+    REM Detect system architecture
+    set ARCH=%PROCESSOR_ARCHITECTURE%
+    echo Detected architecture: %ARCH%
+
+    REM Check if Docker is installed
+    echo Checking Docker installation status...
+    docker --version >nul 2>&1
+    if %errorlevel% neq 0 (
+        echo ❌ Docker is not installed
+        echo Please install Docker Desktop for Windows first:
+        echo https://docs.docker.com/desktop/install/windows-install/
+        pause
+        exit /b 1
+    ) else (
+        echo ✅ Docker is installed
+        docker --version
+    )
+
+    REM Determine Docker image
+    if "%ARCH%"=="AMD64" (
+        set IMAGE=privoce/vocespace:latest
+        echo Using AMD64 image: %IMAGE%
+    ) else if "%ARCH%"=="ARM64" (
+        set IMAGE=privoce/vocespace:latest_arm
+        echo Using ARM64 image: %IMAGE%
+    ) else (
+        echo ❌ Unsupported architecture: %ARCH%
+        echo Supported architectures: AMD64, ARM64
+        pause
+        exit /b 1
+    )
+
+    REM Pull VoceSpace image
+    echo ==========================================
+    echo Pulling VoceSpace Docker image
+    echo ==========================================
+    echo Pulling image: %IMAGE%
+
+    docker pull %IMAGE%
+    if %errorlevel% neq 0 (
+        echo ❌ Image pull failed
+        pause
+        exit /b 1
+    )
+    echo ✅ Image pull completed
+
+    REM Start VoceSpace container
+    echo ==========================================
+    echo Starting VoceSpace container
+    echo ==========================================
+
+    set CONTAINER_NAME=vocespace
+
+    REM Check if container already exists
+    docker ps -a --filter "name=%CONTAINER_NAME%" --format "{{.Names}}" | findstr /x "%CONTAINER_NAME%" >nul 2>&1
+    if %errorlevel% equ 0 (
+        echo Detected existing container %CONTAINER_NAME%
+        set /p CHOICE="Do you want to stop and remove the existing container? (y/n): "
+        if /i "!CHOICE!"=="y" (
+            echo Stopping and removing existing container...
+            docker stop %CONTAINER_NAME% >nul 2>&1
+            docker rm %CONTAINER_NAME% >nul 2>&1
+        ) else (
+            echo Operation cancelled
+            pause
+            exit /b 1
+        )
+    )
+
+    echo Starting new container...
+    if "!ENV_VARS!"=="" (
+        docker run -d -p 3000:3000 --name %CONTAINER_NAME% %IMAGE%
+    ) else (
+        docker run -d -p 3000:3000 !ENV_VARS! --name %CONTAINER_NAME% %IMAGE%
+    )
+    if %errorlevel% neq 0 (
+        echo ❌ Container startup failed
+        pause
+        exit /b 1
+    )
+
+    echo ✅ VoceSpace container started successfully
+    echo Container name: %CONTAINER_NAME%
+    echo Access URL: http://localhost:3000
+
+    REM LiveKit Server installation instructions
+    echo ==========================================
+    echo LiveKit Server installation instructions
+    echo ==========================================
+    echo For Windows systems, please manually download and install LiveKit Server:
+    echo 1. Visit: https://github.com/livekit/livekit/releases
+    echo 2. Download the version suitable for your system
+    echo 3. Extract to a suitable directory
+    echo 4. Run the following command in the terminal: livekit-server --dev --bind 0.0.0.0
+    echo.
+
+    REM Check if LiveKit Server is available
+    livekit-server --help >nul 2>&1
+    if %errorlevel% equ 0 (
+        echo ✅ LiveKit Server is installed
+        echo Starting LiveKit Server...
+        start /b livekit-server --dev --bind 0.0.0.0
+        timeout /t 3 /nobreak >nul
+        echo ✅ LiveKit Server is running
+    ) else (
+        echo ⚠️  LiveKit Server is not found, please install it manually as per the instructions above
+    )
+
+    REM Show status
+    echo ==========================================
+    echo Deployment status check
+    echo ==========================================
+
+    echo Docker container status:
+    docker ps --filter "name=%CONTAINER_NAME%" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+    echo.
+    echo ==========================================
+    echo Access Information
+    echo ==========================================
+    echo VoceSpace application: http://localhost:3000
+    echo LiveKit Server: ws://localhost:7880
+    echo.
+    echo To view container logs: docker logs %CONTAINER_NAME%
+    echo.
+
+    echo ==========================================
+    echo 🎉 Deployment completed!
+    echo ==========================================
+    echo Please visit http://localhost:3000 in your browser
+    echo If you encounter any issues, please check the relevant logs
+
+    pause
+    ```
+  </Tab>
+</Tabs>
+
+## Docker network connection timeout
 
 ### 👍 Choose to use the Chinese domestic mirror
 

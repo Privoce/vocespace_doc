@@ -1,3 +1,5 @@
+import { Tab, Tabs } from "@theme";
+
 # 帮助
 
 ## 查看自己的linux架构
@@ -33,6 +35,617 @@ arch
 - 如果输出为 `aarch64` 或 `arm64`，则表示系统是基于 ARM64 架构。
 - 如果输出为 `armv7l` 或类似内容，则表示系统是基于 ARMv7 架构。
 
+## 本地部署脚本
+
+<Tabs>
+  <Tab label="Linux/macOS">
+    ```shell
+    #!/bin/bash
+
+    # VoceSpace 本地部署自动化脚本
+    # 适用于 macOS 和 Linux 系统
+
+    set -e  # 遇到错误时退出
+
+    # 默认环境变量
+    RESOLUTION=""
+    CUSTOM_ENV_VARS=()
+
+    # 显示使用帮助
+    show_help() {
+        echo "=========================================="
+        echo "VoceSpace 本地部署自动化脚本"
+        echo "=========================================="
+        echo ""
+        echo "用法: $0 [选项]"
+        echo ""
+        echo "选项:"
+        echo "  -r, --resolution RESOLUTION    设置分辨率 (例如: 4k, 1080p, 720p)"
+        echo "  -e, --env KEY=VALUE            设置自定义环境变量"
+        echo "  -h, --help                     显示此帮助信息"
+        echo ""
+        echo "示例:"
+        echo "  $0 -r 4k"
+        echo "  $0 --resolution 1080p"
+        echo "  $0 -r 4k -e CUSTOM_VAR=value"
+        echo "  $0 -e NEXT_PUBLIC_RESOLUTION=4k -e ANOTHER_VAR=test"
+        echo ""
+        echo "支持的分辨率:"
+        echo "  - 4k"
+        echo "  - 2k"
+        echo "  - 1080p"
+        echo "  - 720p"
+        echo "  - 480p"
+        echo ""
+    }
+
+    # 解析命令行参数
+    parse_args() {
+        while [[ $# -gt 0 ]]; do
+            case $1 in
+                -r|--resolution)
+                    RESOLUTION="$2"
+                    shift 2
+                    ;;
+                -e|--env)
+                    CUSTOM_ENV_VARS+=("$2")
+                    shift 2
+                    ;;
+                -h|--help)
+                    show_help
+                    exit 0
+                    ;;
+                *)
+                    echo "❌ 未知参数: $1"
+                    echo "使用 $0 --help 查看帮助信息"
+                    exit 1
+                    ;;
+            esac
+        done
+    }
+
+    echo "=========================================="
+    echo "VoceSpace 本地部署自动化脚本"
+    echo "=========================================="
+
+    # 检测操作系统
+    OS=$(uname -s)
+    ARCH=$(uname -m)
+
+    echo "检测到系统: $OS"
+    echo "检测到架构: $ARCH"
+
+    # 函数：检查命令是否存在
+    check_command() {
+        if ! command -v "$1" &> /dev/null; then
+            echo "❌ $1 未安装"
+            return 1
+        else
+            echo "✅ $1 已安装"
+            return 0
+        fi
+    }
+
+    # 函数：检查 Docker 是否安装
+    check_docker() {
+        if check_command docker; then
+            echo "Docker 版本: $(docker --version)"
+            return 0
+        else
+            echo "❌ Docker 未安装，请先安装 Docker"
+            echo "请访问以下链接安装 Docker:"
+            case $OS in
+                "Darwin")
+                    echo "  macOS: https://docs.docker.com/desktop/install/mac-install/"
+                    ;;
+                "Linux")
+                    echo "  Linux: https://docs.docker.com/engine/install/"
+                    ;;
+                *)
+                    echo "  通用: https://docs.docker.com/get-docker/"
+                    ;;
+            esac
+            return 1
+        fi
+    }
+
+    # 函数：安装 LiveKit Server
+    install_livekit() {
+        echo "=========================================="
+        echo "安装 LiveKit Server"
+        echo "=========================================="
+        
+        if check_command livekit-server; then
+            echo "LiveKit Server 已安装"
+            return 0
+        fi
+        
+        case $OS in
+            "Darwin")
+                echo "在 macOS 上安装 LiveKit Server..."
+                if check_command brew; then
+                    brew update && brew install livekit
+                else
+                    echo "❌ Homebrew 未安装，请先安装 Homebrew 或手动安装 LiveKit Server"
+                    echo "Homebrew 安装: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+                    return 1
+                fi
+                ;;
+            "Linux")
+                echo "在 Linux 上安装 LiveKit Server..."
+                curl -sSL https://get.livekit.io | bash
+                ;;
+            *)
+                echo "❌ 不支持的操作系统: $OS"
+                echo "请手动安装 LiveKit Server: https://github.com/livekit/livekit/releases"
+                return 1
+                ;;
+        esac
+    }
+
+    # 函数：确定 Docker 镜像
+    get_docker_image() {
+        case $ARCH in
+            "x86_64"|"amd64")
+                echo "privoce/vocespace:latest"
+                ;;
+            "arm64"|"aarch64")
+                echo "privoce/vocespace:latest_arm"
+                ;;
+            *)
+                echo "❌ 不支持的架构: $ARCH"
+                echo "支持的架构: x86_64, amd64, arm64, aarch64"
+                exit 1
+                ;;
+        esac
+    }
+
+    # 函数：拉取 VoceSpace 镜像
+    pull_vocespace_image() {
+        echo "=========================================="
+        echo "拉取 VoceSpace Docker 镜像"
+        echo "=========================================="
+        
+        IMAGE=$(get_docker_image)
+        echo "拉取镜像: $IMAGE"
+        
+        docker pull "$IMAGE"
+        echo "✅ 镜像拉取完成"
+    }
+
+    # 函数：启动 VoceSpace 容器
+    start_vocespace_container() {
+        echo "=========================================="
+        echo "启动 VoceSpace 容器"
+        echo "=========================================="
+        
+        IMAGE=$(get_docker_image)
+        CONTAINER_NAME="vocespace"
+        
+        # 构建环境变量参数
+        ENV_ARGS=()
+        
+        # 添加分辨率环境变量
+        if [[ -n "$RESOLUTION" ]]; then
+            ENV_ARGS+=("-e" "NEXT_PUBLIC_RESOLUTION=$RESOLUTION")
+            echo "设置分辨率: $RESOLUTION"
+        fi
+        
+        # 添加自定义环境变量
+        for env_var in "${CUSTOM_ENV_VARS[@]}"; do
+            ENV_ARGS+=("-e" "$env_var")
+            echo "设置环境变量: $env_var"
+        done
+        
+        # 检查容器是否已存在
+        if docker ps -a --format "table {{.Names}}" | grep -q "^$CONTAINER_NAME$"; then
+            echo "检测到已存在的容器 $CONTAINER_NAME"
+            read -p "是否要停止并移除现有容器？(y/n): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                echo "停止并移除现有容器..."
+                docker stop "$CONTAINER_NAME" 2>/dev/null || true
+                docker rm "$CONTAINER_NAME" 2>/dev/null || true
+            else
+                echo "取消操作"
+                return 1
+            fi
+        fi
+        
+        echo "启动新容器..."
+        if [[ ${#ENV_ARGS[@]} -gt 0 ]]; then
+            echo "使用环境变量: ${ENV_ARGS[*]}"
+            docker run -d \
+                -p 3000:3000 \
+                --name "$CONTAINER_NAME" \
+                "${ENV_ARGS[@]}" \
+                "$IMAGE"
+        else
+            docker run -d \
+                -p 3000:3000 \
+                --name "$CONTAINER_NAME" \
+                "$IMAGE"
+        fi
+        
+        echo "✅ VoceSpace 容器启动完成"
+        echo "容器名称: $CONTAINER_NAME"
+        echo "访问地址: http://localhost:3000"
+    }
+
+    # 函数：启动 LiveKit Server
+    start_livekit_server() {
+        echo "=========================================="
+        echo "启动 LiveKit Server"
+        echo "=========================================="
+        
+        echo "检查 LiveKit Server 是否已在运行..."
+        if pgrep -f "livekit-server" > /dev/null; then
+            echo "⚠️  LiveKit Server 已在运行"
+            read -p "是否要重启 LiveKit Server？(y/n): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                echo "停止现有的 LiveKit Server..."
+                pkill -f "livekit-server" || true
+                sleep 2
+            else
+                echo "保持现有的 LiveKit Server 运行"
+                return 0
+            fi
+        fi
+        
+        echo "启动 LiveKit Server..."
+        echo "注意: LiveKit Server 将在后台运行"
+        echo "如需停止，请使用: pkill -f livekit-server"
+        
+        nohup livekit-server --dev --bind 0.0.0.0 > livekit-server.log 2>&1 &
+        
+        sleep 3
+        
+        if pgrep -f "livekit-server" > /dev/null; then
+            echo "✅ LiveKit Server 启动完成"
+            echo "日志文件: $(pwd)/livekit-server.log"
+        else
+            echo "❌ LiveKit Server 启动失败"
+            echo "请检查日志文件: $(pwd)/livekit-server.log"
+            return 1
+        fi
+    }
+
+    # 函数：显示状态
+    show_status() {
+        echo "=========================================="
+        echo "部署状态检查"
+        echo "=========================================="
+        
+        echo "Docker 容器状态:"
+        docker ps --filter "name=vocespace" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        
+        echo ""
+        echo "LiveKit Server 状态:"
+        if pgrep -f "livekit-server" > /dev/null; then
+            echo "✅ LiveKit Server 正在运行"
+        else
+            echo "❌ LiveKit Server 未运行"
+        fi
+        
+        echo ""
+        echo "=========================================="
+        echo "访问信息"
+        echo "=========================================="
+        echo "VoceSpace 应用: http://localhost:3000"
+        echo "LiveKit Server: ws://localhost:7880"
+        echo ""
+        echo "如需查看容器日志: docker logs vocespace"
+        echo "如需查看 LiveKit 日志: tail -f livekit-server.log"
+    }
+
+    # 主函数
+    main() {
+        # 解析命令行参数
+        parse_args "$@"
+        
+        echo "开始部署流程..."
+        
+        # 显示配置信息
+        if [[ -n "$RESOLUTION" ]] || [[ ${#CUSTOM_ENV_VARS[@]} -gt 0 ]]; then
+            echo "=========================================="
+            echo "配置信息"
+            echo "=========================================="
+            [[ -n "$RESOLUTION" ]] && echo "分辨率: $RESOLUTION"
+            for env_var in "${CUSTOM_ENV_VARS[@]}"; do
+                echo "环境变量: $env_var"
+            done
+            echo ""
+        fi
+        
+        # 检查 Docker
+        if ! check_docker; then
+            exit 1
+        fi
+        
+        # 安装 LiveKit Server
+        if ! install_livekit; then
+            echo "❌ LiveKit Server 安装失败"
+            exit 1
+        fi
+        
+        # 拉取镜像
+        if ! pull_vocespace_image; then
+            echo "❌ 镜像拉取失败"
+            exit 1
+        fi
+        
+        # 启动容器
+        if ! start_vocespace_container; then
+            echo "❌ 容器启动失败"
+            exit 1
+        fi
+        
+        # 启动 LiveKit Server
+        if ! start_livekit_server; then
+            echo "❌ LiveKit Server 启动失败"
+            exit 1
+        fi
+        
+        echo ""
+        echo "等待服务启动..."
+        sleep 5
+        
+        # 显示状态
+        show_status
+        
+        echo ""
+        echo "=========================================="
+        echo "🎉 部署完成！"
+        echo "=========================================="
+        echo "请在浏览器中访问 http://localhost:3000"
+        echo "如遇到问题，请查看相关日志文件"
+    }
+
+    # 运行主函数
+    main "$@"
+    ```
+  </Tab>
+  <Tab label="Windows">
+    ```shell
+    @echo off
+    setlocal EnableDelayedExpansion
+
+    REM VoceSpace 本地部署自动化脚本 (Windows)
+    REM 适用于 Windows 系统
+
+    REM 默认环境变量
+    set RESOLUTION=
+    set ENV_VARS=
+
+    REM 显示使用帮助
+    :show_help
+    echo ==========================================
+    echo VoceSpace 本地部署自动化脚本 (Windows)
+    echo ==========================================
+    echo.
+    echo 用法: %~nx0 [选项]
+    echo.
+    echo 选项:
+    echo   -r, --resolution RESOLUTION    设置分辨率 (例如: 4k, 1080p, 720p)
+    echo   -e, --env KEY=VALUE            设置自定义环境变量
+    echo   -h, --help                     显示此帮助信息
+    echo.
+    echo 示例:
+    echo   %~nx0 -r 4k
+    echo   %~nx0 --resolution 1080p
+    echo   %~nx0 -r 4k -e CUSTOM_VAR=value
+    echo   %~nx0 -e NEXT_PUBLIC_RESOLUTION=4k
+    echo.
+    echo 支持的分辨率:
+    echo   - 4k
+    echo   - 2k
+    echo   - 1080p
+    echo   - 720p
+    echo   - 480p
+    echo.
+    goto :eof
+
+    REM 解析命令行参数
+    :parse_args
+    if "%~1"=="" goto start_main
+    if "%~1"=="-h" goto show_help
+    if "%~1"=="--help" goto show_help
+    if "%~1"=="-r" (
+        set RESOLUTION=%~2
+        shift
+        shift
+        goto parse_args
+    )
+    if "%~1"=="--resolution" (
+        set RESOLUTION=%~2
+        shift
+        shift
+        goto parse_args
+    )
+    if "%~1"=="-e" (
+        if "!ENV_VARS!"=="" (
+            set ENV_VARS=-e %~2
+        ) else (
+            set ENV_VARS=!ENV_VARS! -e %~2
+        )
+        shift
+        shift
+        goto parse_args
+    )
+    if "%~1"=="--env" (
+        if "!ENV_VARS!"=="" (
+            set ENV_VARS=-e %~2
+        ) else (
+            set ENV_VARS=!ENV_VARS! -e %~2
+        )
+        shift
+        shift
+        goto parse_args
+    )
+    echo ❌ 未知参数: %~1
+    echo 使用 %~nx0 --help 查看帮助信息
+    exit /b 1
+
+    :start_main
+    REM 调用参数解析
+    call :parse_args %*
+
+    echo ==========================================
+    echo VoceSpace 本地部署自动化脚本 (Windows)
+    echo ==========================================
+
+    REM 如果设置了分辨率，添加到环境变量
+    if not "%RESOLUTION%"=="" (
+        echo 设置分辨率: %RESOLUTION%
+        if "!ENV_VARS!"=="" (
+            set ENV_VARS=-e NEXT_PUBLIC_RESOLUTION=%RESOLUTION%
+        ) else (
+            set ENV_VARS=!ENV_VARS! -e NEXT_PUBLIC_RESOLUTION=%RESOLUTION%
+        )
+    )
+
+    REM 显示将要使用的环境变量
+    if not "!ENV_VARS!"=="" (
+        echo 将使用以下环境变量: !ENV_VARS!
+    )
+
+    REM 检测系统架构
+    set ARCH=%PROCESSOR_ARCHITECTURE%
+    echo 检测到架构: %ARCH%
+
+    REM 检查 Docker 是否安装
+    echo 检查 Docker 安装状态...
+    docker --version >nul 2>&1
+    if %errorlevel% neq 0 (
+        echo ❌ Docker 未安装
+        echo 请先安装 Docker Desktop for Windows:
+        echo https://docs.docker.com/desktop/install/windows-install/
+        pause
+        exit /b 1
+    ) else (
+        echo ✅ Docker 已安装
+        docker --version
+    )
+
+    REM 确定 Docker 镜像
+    if "%ARCH%"=="AMD64" (
+        set IMAGE=privoce/vocespace:latest
+        echo 使用 AMD64 镜像: %IMAGE%
+    ) else if "%ARCH%"=="ARM64" (
+        set IMAGE=privoce/vocespace:latest_arm
+        echo 使用 ARM64 镜像: %IMAGE%
+    ) else (
+        echo ❌ 不支持的架构: %ARCH%
+        echo 支持的架构: AMD64, ARM64
+        pause
+        exit /b 1
+    )
+
+    REM 拉取 VoceSpace 镜像
+    echo ==========================================
+    echo 拉取 VoceSpace Docker 镜像
+    echo ==========================================
+    echo 拉取镜像: %IMAGE%
+
+    docker pull %IMAGE%
+    if %errorlevel% neq 0 (
+        echo ❌ 镜像拉取失败
+        pause
+        exit /b 1
+    )
+    echo ✅ 镜像拉取完成
+
+    REM 启动 VoceSpace 容器
+    echo ==========================================
+    echo 启动 VoceSpace 容器
+    echo ==========================================
+
+    set CONTAINER_NAME=vocespace
+
+    REM 检查容器是否已存在
+    docker ps -a --filter "name=%CONTAINER_NAME%" --format "{{.Names}}" | findstr /x "%CONTAINER_NAME%" >nul 2>&1
+    if %errorlevel% equ 0 (
+        echo 检测到已存在的容器 %CONTAINER_NAME%
+        set /p CHOICE="是否要停止并移除现有容器？(y/n): "
+        if /i "!CHOICE!"=="y" (
+            echo 停止并移除现有容器...
+            docker stop %CONTAINER_NAME% >nul 2>&1
+            docker rm %CONTAINER_NAME% >nul 2>&1
+        ) else (
+            echo 取消操作
+            pause
+            exit /b 1
+        )
+    )
+
+    echo 启动新容器...
+    if "!ENV_VARS!"=="" (
+        docker run -d -p 3000:3000 --name %CONTAINER_NAME% %IMAGE%
+    ) else (
+        docker run -d -p 3000:3000 !ENV_VARS! --name %CONTAINER_NAME% %IMAGE%
+    )
+    if %errorlevel% neq 0 (
+        echo ❌ 容器启动失败
+        pause
+        exit /b 1
+    )
+
+    echo ✅ VoceSpace 容器启动完成
+    echo 容器名称: %CONTAINER_NAME%
+    echo 访问地址: http://localhost:3000
+
+    REM LiveKit Server 说明
+    echo ==========================================
+    echo LiveKit Server 安装说明
+    echo ==========================================
+    echo 对于 Windows 系统，请手动下载并安装 LiveKit Server:
+    echo 1. 访问: https://github.com/livekit/livekit/releases
+    echo 2. 下载适合您系统的版本
+    echo 3. 解压到合适的目录
+    echo 4. 在命令行中运行: livekit-server --dev --bind 0.0.0.0
+    echo.
+
+    REM 检查 LiveKit Server 是否可用
+    livekit-server --help >nul 2>&1
+    if %errorlevel% equ 0 (
+        echo ✅ LiveKit Server 已安装
+        echo 启动 LiveKit Server...
+        start /b livekit-server --dev --bind 0.0.0.0
+        timeout /t 3 /nobreak >nul
+        echo ✅ LiveKit Server 已启动
+    ) else (
+        echo ⚠️  LiveKit Server 未找到，请按照上述说明手动安装
+    )
+
+    REM 显示状态
+    echo ==========================================
+    echo 部署状态检查
+    echo ==========================================
+
+    echo Docker 容器状态:
+    docker ps --filter "name=%CONTAINER_NAME%" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+    echo.
+    echo ==========================================
+    echo 访问信息
+    echo ==========================================
+    echo VoceSpace 应用: http://localhost:3000
+    echo LiveKit Server: ws://localhost:7880
+    echo.
+    echo 如需查看容器日志: docker logs %CONTAINER_NAME%
+    echo.
+
+    echo ==========================================
+    echo 🎉 部署完成！
+    echo ==========================================
+    echo 请在浏览器中访问 http://localhost:3000
+    echo 如遇到问题，请查看相关日志
+
+    pause
+    ```
+  </Tab>
+</Tabs>
 
 
 ## Docker 网络连接超时
