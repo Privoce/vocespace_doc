@@ -35,6 +35,64 @@ arch
 - 如果输出为 `aarch64` 或 `arm64`，则表示系统是基于 ARM64 架构。
 - 如果输出为 `armv7l` 或类似内容，则表示系统是基于 ARMv7 架构。
 
+## 如何提高视频/屏幕分享的质量
+
+| 分辨率              | 像素      | 帧率  | 编码器 | 推荐码率 | 高质量码率 | 极致码率 |
+| ------------------- | --------- | ----- | ------ | -------- | ---------- | -------- |
+| **540p (qHD)**      | 960×540   | 30fps | H.264  | 800 Kbps | 1 Mbps     | 1.5 Mbps |
+|                     |           |       | VP9    | 600 Kbps | 800 Kbps   | 1.2 Mbps |
+|                     |           |       | AV1    | 400 Kbps | 700 Kbps   | 1 Mbps   |
+| **720p (HD)**       | 1280×720  | 30fps | H.264  | 1.5 Mbps | 2 Mbps     | 2.5 Mbps |
+|                     |           | 60fps | H.264  | 2.5 Mbps | 3.5 Mbps   | 4 Mbps   |
+|                     |           |       | VP9    | 1.2 Mbps | 1.8 Mbps   | 2.2 Mbps |
+|                     |           |       | AV1    | 1 Mbps   | 1.5 Mbps   | 2 Mbps   |
+| **1080p (Full HD)** | 1920×1080 | 30fps | H.264  | 3 Mbps   | 4.5 Mbps   | 6 Mbps   |
+|                     |           | 60fps | H.264  | 4.5 Mbps | 6 Mbps     | 8 Mbps   |
+|                     |           |       | VP9    | 2.5 Mbps | 4 Mbps     | 5 Mbps   |
+|                     |           |       | AV1    | 1.8 Mbps | 3 Mbps     | 4 Mbps   |
+| **1440p (2K/QHD)**  | 2560×1440 | 30fps | H.264  | 6 Mbps   | 8 Mbps     | 10 Mbps  |
+|                     |           | 60fps | H.264  | 8 Mbps   | 10 Mbps    | 14 Mbps  |
+|                     |           |       | VP9    | 4.5 Mbps | 7 Mbps     | 9 Mbps   |
+|                     |           |       | AV1    | 3.5 Mbps | 5 Mbps     | 7 Mbps   |
+| **2160p (4K/UHD)**  | 3840×2160 | 30fps | H.264  | 10 Mbps  | 14 Mbps    | 20 Mbps  |
+|                     |           | 60fps | H.264  | 15 Mbps  | 20 Mbps    | 25 Mbps  |
+|                     |           |       | VP9    | 8 Mbps   | 12 Mbps    | 18 Mbps  |
+|                     |           |       | AV1    | 6 Mbps   | 10 Mbps    | 14 Mbps  |
+
+### 说明
+
+* **推荐码率**：适合日常直播、会议、低延迟推流。
+* **高质量码率**：适合 YouTube 上传或录播，兼顾质量与文件大小。
+* **极致码率**：用于高质量保留或专业场景，如素材采集、视频剪辑源。
+* **编码器说明**：
+
+  * **H.264**：兼容性最好，硬件支持广泛。
+  * **VP9**：Google 推出，YouTube 广泛采用，效率略高于 H.264。
+  * **AV1**：下一代高压缩比编码格式，文件更小，但编码耗时较长。
+
+
+### 对应启动参数
+
+- 分辨率: `NEXT_PUBLIC_RESOLUTION`
+- 码率: `NEXT_PUBLIC_MAXBITRATE`
+- 帧率: `NEXT_PUBLIC_MAXFRAMERATE`
+- 策略: `NEXT_PUBLIC_PRIORITY`
+  - high
+  - medium
+  - low
+  - very-low
+
+### 例子
+
+当您需要使用720p + 60帧 + 高精度策略时
+
+```bash 
+bash ./local_deploy_en.sh \
+-e NEXT_PUBLIC_RESOLUTION=720p \
+-e NEXT_PUBLIC_MAXFRAMERATE=60 -e \
+NEXT_PUBLIC_PRIORITY=high
+```
+
 ## 本地部署脚本
 
 <Tabs>

@@ -35,6 +35,62 @@ arch
 - If the output is `aarch64` or `arm64`, it means the system is based on ARM64 architecture.
 - If the output is `armv7l` or similar, it means the system is based on ARMv7 architecture.
 
+## How to improve the quality of video/screen sharing
+
+| Resolution | Pixels | Frame rate | Encoder | Recommended bitrate | High quality bitrate | Extreme bitrate |
+| ------------------- | --------- | ----- | ------ | -------- | ---------- | -------- |
+| **540p (qHD)** | 960×540 | 30fps | H.264 | 800 Kbps | 1 Mbps | 1.5 Mbps |
+| | | | VP9 | 600 Kbps | 800 Kbps | 1.2 Mbps |
+| | | | AV1 | 400 Kbps | 700 Kbps | 1 Mbps |
+| **720p (HD)** | 1280×720 | 30fps | H.264 | 1.5 Mbps | 2 Mbps | 2.5 Mbps |
+| | | 60fps | H.264 | 2.5 Mbps | 3.5 Mbps | 4 Mbps |
+| | | | VP9 | 1.2 Mbps | 1.8 Mbps | 2.2 Mbps |
+| | | | AV1 | 1 Mbps | 1.5 Mbps | 2 Mbps |
+| **1080p (Full HD)** | 1920×1080 | 30fps | H.264 | 3 Mbps | 4.5 Mbps | 6 Mbps |
+| | | 60fps | H.264 | 4.5 Mbps | 6 Mbps | 8 Mbps |
+| | | | VP9 | 2.5 Mbps | 4 Mbps | 5 Mbps |
+| | | | AV1 | 1.8 Mbps | 3 Mbps | 4 Mbps |
+| **1440p (2K/QHD)** | 2560×1440 | 30fps | H.264 | 6 Mbps | 8 Mbps | 10 Mbps |
+| | | 60fps | H.264 | 8 Mbps | 10 Mbps | 14 Mbps |
+| | | | VP9 | 4.5 Mbps | 7 Mbps | 9 Mbps |
+| | | | AV1 | 3.5 Mbps | 5 Mbps | 7 Mbps |
+| **2160p (4K/UHD)** | 3840×2160 | 30fps | H.264 | 10 Mbps | 14 Mbps | 20 Mbps |
+| | | 60fps | H.264 | 15 Mbps | 20 Mbps | 25 Mbps |
+| | | | VP9 | 8 Mbps | 12 Mbps | 18 Mbps |
+| | | | AV1 | 6 Mbps | 10 Mbps | 14 Mbps |
+
+### Description
+
+* **Recommended Bitrate**: Suitable for daily live broadcasts, conferences, and low-latency streaming.
+* **High-quality Bitrate**: Suitable for YouTube uploads or recordings, taking into account both quality and file size.
+* **Ultimate Bitrate**: Used for high-quality preservation or professional scenarios, such as material acquisition and video editing sources.
+* **Encoder Description**:
+    * **H.264**: Best compatibility and wide hardware support.
+    * **VP9**: Launched by Google and widely adopted by YouTube, with slightly higher efficiency than H.264.
+    * **AV1**: Next-generation high-compression encoding format, with smaller files, but longer encoding time.
+
+### Corresponding startup parameters
+
+- Resolution: `NEXT_PUBLIC_RESOLUTION`
+- Bitrate: `NEXT_PUBLIC_MAXBITRATE`
+- Frame rate: `NEXT_PUBLIC_MAXFRAMERATE`
+- Policy: `NEXT_PUBLIC_PRIORITY`
+    - high
+    - medium
+    - low
+    - very-low
+
+### Example
+
+When you need to use 720p + 60 frames + high-precision policy
+
+```bash
+bash ./local_deploy_en.sh \
+-e NEXT_PUBLIC_RESOLUTION=720p \
+-e NEXT_PUBLIC_MAXFRAMERATE=60 -e \
+NEXT_PUBLIC_PRIORITY=high
+```
+
 ## Local deployment scripts
 
 <Tabs>
