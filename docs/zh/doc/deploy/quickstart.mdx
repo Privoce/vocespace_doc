@@ -39,7 +39,7 @@ import { Tab, Tabs } from "@theme";
     bash ./local_deploy.sh
 
     # 设置分辨率为 4K
-    bash ./local_deploy.sh -r 4k
+    bash ./local_deploy.sh -e NEXT_PUBLIC_RESOLUTION=4k
 
     # 设置自定义环境变量
     bash ./local_deploy.sh -e CUSTOM_VAR=<value>
@@ -51,7 +51,7 @@ import { Tab, Tabs } from "@theme";
     sh ./local_deploy.sh
 
     # 设置分辨率为 4K
-    sh ./local_deploy.sh -r 4k
+    sh ./local_deploy.sh -e NEXT_PUBLIC_RESOLUTION=4k
 
     # 设置自定义环境变量
     sh ./local_deploy.sh -e CUSTOM_VAR=<value>
@@ -63,7 +63,7 @@ import { Tab, Tabs } from "@theme";
     local_deploy.bat
 
     # 设置分辨率为 4K
-    local_deploy.bat -r 4k
+    local_deploy.bat -e NEXT_PUBLIC_RESOLUTION=4k
 
     # 设置自定义环境变量
     local_deploy.bat -e CUSTOM_VAR=<value>
