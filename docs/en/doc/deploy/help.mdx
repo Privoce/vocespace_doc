@@ -48,7 +48,6 @@ arch
     set -e # Exit when encountering an error
 
     # Default environment variables
-    RESOLUTION=""
     CUSTOM_ENV_VARS=()
 
     # Display usage help
@@ -60,22 +59,20 @@ arch
         echo "Usage: $0 [options]"
         echo ""
         echo "Options:"
-        echo " -r, --resolution RESOLUTION Set resolution (e.g.: 4k, 1080p, 720p)"
-        echo " -e, --env KEY=VALUE Set custom environment variables"
-        echo " -h, --help Show this help information"
+        echo "  -e, --env KEY=VALUE            Set custom environment variables"
+        echo "  -h, --help                     Show this help information"
         echo ""
-        echo "Example:"
-        echo " $0 -r 4k"
-        echo " $0 --resolution 1080p"
-        echo " $0 -r 4k -e CUSTOM_VAR=value"
-        echo " $0 -e NEXT_PUBLIC_RESOLUTION=4k -e ANOTHER_VAR=test"
+        echo "Examples:"
+        echo "  $0 -e NEXT_PUBLIC_RESOLUTION=4k"
+        echo "  $0 -e NEXT_PUBLIC_RESOLUTION=1080p"
+        echo "  $0 -e NEXT_PUBLIC_RESOLUTION=4k -e CUSTOM_VAR=value"
+        echo "  $0 -e NEXT_PUBLIC_MAXBITRATE=8000 -e NEXT_PUBLIC_RESOLUTION=720p"
         echo ""
-        echo "Supported resolutions:"
-        echo "  - 4k"
-        echo "  - 2k"
-        echo "  - 1080p"
-        echo "  - 720p"
-        echo "  - 480p"
+        echo "Common environment variables:"
+        echo "  - NEXT_PUBLIC_RESOLUTION: Set resolution (4k, 2k, 1080p, 720p, 480p)"
+        echo "  - NEXT_PUBLIC_MAXBITRATE: Set maximum bitrate"
+        echo "  - NEXT_PUBLIC_MAXFRAMERATE: Set maximum frame rate"
+        echo "  - NEXT_PUBLIC_PRIORITY: Set priority"
         echo ""
     }
 
@@ -83,10 +80,6 @@ arch
     parse_args() {
         while [[ $# -gt 0 ]]; do
             case $1 in
-                -r|--resolution)
-                    RESOLUTION="$2"
-                    shift 2
-                    ;;
                 -e|--env)
                     CUSTOM_ENV_VARS+=("$2")
                     shift 2
@@ -225,12 +218,6 @@ arch
         # Build environment variable arguments
         ENV_ARGS=()
 
-        # Add resolution environment variable
-        if [[ -n "$RESOLUTION" ]]; then
-            ENV_ARGS+=("-e" "NEXT_PUBLIC_RESOLUTION=$RESOLUTION")
-            echo "Setting resolution: $RESOLUTION"
-        fi
-
         # Add custom environment variables
         for env_var in "${CUSTOM_ENV_VARS[@]}"; do
             ENV_ARGS+=("-e" "$env_var")
@@ -347,11 +334,10 @@ arch
         echo "Starting deployment process..."
         
         # Show configuration information
-        if [[ -n "$RESOLUTION" ]] || [[ ${#CUSTOM_ENV_VARS[@]} -gt 0 ]]; then
+        if [[ ${#CUSTOM_ENV_VARS[@]} -gt 0 ]]; then
             echo "=========================================="
             echo "Configuration Information"
             echo "=========================================="
-            [[ -n "$RESOLUTION" ]] && echo "Resolution: $RESOLUTION"
             for env_var in "${CUSTOM_ENV_VARS[@]}"; do
                 echo "Environment Variable: $env_var"
             done
@@ -404,7 +390,6 @@ arch
 
     # Run main function
     main "$@"
-
     ```
   </Tab>
   <Tab label="Windows">
@@ -413,13 +398,12 @@ arch
     setlocal EnableDelayedExpansion
 
     REM VoceSpace local deployment automation script (Windows)
-    REM Applicable to Windows systems
+    REM Applicable to Windows system
 
     REM Default environment variables
-    set RESOLUTION=
     set ENV_VARS=
 
-    REM Show usage help
+    REM Display usage help
     :show_help
     echo ===========================================
     echo VoceSpace local deployment automation script (Windows)
@@ -428,42 +412,28 @@ arch
     echo usage: %~nx0 [options]
     echo.
     echo options:
-    echo -r, --resolution RESOLUTION Set resolution (e.g.: 4k, 1080p, 720p)
     echo -e, --env KEY=VALUE Set custom environment variables
-    echo -h, --help Display this help information
+    echo -h, --help Show this help information
     echo.
-    echo Examples:
-    echo %~nx0 -r 4k
-    echo %~nx0 --resolution 1080p
-    echo %~nx0 -r 4k -e CUSTOM_VAR=value
+    echo example:
     echo %~nx0 -e NEXT_PUBLIC_RESOLUTION=4k
+    echo %~nx0 -e NEXT_PUBLIC_RESOLUTION=1080p
+    echo %~nx0 -e NEXT_PUBLIC_RESOLUTION=4k -e CUSTOM_VAR=value
+    echo %~nx0 -e NEXT_PUBLIC_MAXBITRATE=8000 -e NEXT_PUBLIC_RESOLUTION=720p
     echo.
-    echo Supported resolutions:
-    echo   - 4k
-    echo   - 2k
-    echo   - 1080p
-    echo   - 720p
-    echo   - 480p
+    echo Common environment variables:
+    echo - NEXT_PUBLIC_RESOLUTION: Set resolution (4k, 2k, 1080p, 720p, 480p)
+    echo - NEXT_PUBLIC_MAXBITRATE: Set maximum bitrate
+    echo - NEXT_PUBLIC_MAXFRAMERATE: Set maximum framerate
+    echo - NEXT_PUBLIC_PRIORITY: Set priority
     echo.
     goto :eof
 
-    REM Parsing command line arguments
+    REM Parse command line arguments
     :parse_args
     if "%~1"=="" goto start_main
     if "%~1"=="-h" goto show_help
     if "%~1"=="--help" goto show_help
-    if "%~1"=="-r" (
-        set RESOLUTION=%~2
-        shift
-        shift
-        goto parse_args
-    )
-    if "%~1"=="--resolution" (
-        set RESOLUTION=%~2
-        shift
-        shift
-        goto parse_args
-    )
     if "%~1"=="-e" (
         if "!ENV_VARS!"=="" (
             set ENV_VARS=-e %~2
@@ -489,24 +459,14 @@ arch
     exit /b 1
 
     :start_main
-    REM Call parameter parsing
+    REM Call argument parsing
     call :parse_args %*
 
     echo ==========================================
     echo VoceSpace local deployment automation script (Windows)
     echo ==========================================
 
-    REM If resolution is set, add to environment variables
-    if not "%RESOLUTION%"=="" (
-        echo Setting resolution: %RESOLUTION%
-        if "!ENV_VARS!"=="" (
-            set ENV_VARS=-e NEXT_PUBLIC_RESOLUTION=%RESOLUTION%
-        ) else (
-            set ENV_VARS=!ENV_VARS! -e NEXT_PUBLIC_RESOLUTION=%RESOLUTION%
-        )
-    )
-
-    REM Show environment variables to be used
+    REM Display the environment variables to be used
     if not "!ENV_VARS!"=="" (
         echo The following environment variables will be used: !ENV_VARS!
     )
@@ -604,7 +564,7 @@ arch
     echo 1. Visit: https://github.com/livekit/livekit/releases
     echo 2. Download the version suitable for your system
     echo 3. Extract to a suitable directory
-    echo 4. Run the following command in the terminal: livekit-server --dev --bind 0.0.0.0
+    echo 4. Run in the command line: livekit-server --dev --bind 0.0.0.0
     echo.
 
     REM Check if LiveKit Server is available
@@ -616,7 +576,7 @@ arch
         timeout /t 3 /nobreak >nul
         echo ✅ LiveKit Server is running
     ) else (
-        echo ⚠️  LiveKit Server is not found, please install it manually as per the instructions above
+        echo ⚠️  LiveKit Server not found, please install it manually as per the instructions above
     )
 
     REM Show status
@@ -644,6 +604,7 @@ arch
     echo If you encounter any issues, please check the relevant logs
 
     pause
+
     ```
   </Tab>
 </Tabs>

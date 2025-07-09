@@ -45,48 +45,41 @@ arch
     # VoceSpace 本地部署自动化脚本
     # 适用于 macOS 和 Linux 系统
 
-    set -e  # 遇到错误时退出
+    set -e # 遇到错误时退出
 
     # 默认环境变量
-    RESOLUTION=""
     CUSTOM_ENV_VARS=()
 
     # 显示使用帮助
     show_help() {
-        echo "=========================================="
-        echo "VoceSpace 本地部署自动化脚本"
-        echo "=========================================="
-        echo ""
-        echo "用法: $0 [选项]"
-        echo ""
-        echo "选项:"
-        echo "  -r, --resolution RESOLUTION    设置分辨率 (例如: 4k, 1080p, 720p)"
-        echo "  -e, --env KEY=VALUE            设置自定义环境变量"
-        echo "  -h, --help                     显示此帮助信息"
-        echo ""
-        echo "示例:"
-        echo "  $0 -r 4k"
-        echo "  $0 --resolution 1080p"
-        echo "  $0 -r 4k -e CUSTOM_VAR=value"
-        echo "  $0 -e NEXT_PUBLIC_RESOLUTION=4k -e ANOTHER_VAR=test"
-        echo ""
-        echo "支持的分辨率:"
-        echo "  - 4k"
-        echo "  - 2k"
-        echo "  - 1080p"
-        echo "  - 720p"
-        echo "  - 480p"
-        echo ""
+    echo "================================================"
+    echo "VoceSpace 本地部署自动化脚本"
+    echo "================================================"
+    echo ""
+    echo "用法：$0 [选项]"
+    echo ""
+    echo "选项："
+    echo " -e, --env KEY=VALUE 设置自定义环境变量"
+    echo " -h, --help 显示此帮助信息"
+    echo ""
+    echo "示例："
+    echo " $0 -e NEXT_PUBLIC_RESOLUTION=4k
+    echo " $0 -e NEXT_PUBLIC_RESOLUTION=1080p"
+    echo " $0 -e NEXT_PUBLIC_RESOLUTION=4k -e CUSTOM_VAR=value"
+    echo " $0 -e NEXT_PUBLIC_MAXBITRATE=8000 -e NEXT_PUBLIC_RESOLUTION=720p"
+    echo ""
+    echo "常用环境变量：
+    echo " - NEXT_PUBLIC_RESOLUTION：设置分辨率（4k、2k、1080p、720p、480p）"
+    echo " - NEXT_PUBLIC_MAXBITRATE：设置最大比特率"
+    echo " - NEXT_PUBLIC_MAXFRAMERATE：设置最大帧率"
+    echo " - NEXT_PUBLIC_PRIORITY：设置优先级"
+    echo ""
     }
 
     # 解析命令行参数
     parse_args() {
         while [[ $# -gt 0 ]]; do
             case $1 in
-                -r|--resolution)
-                    RESOLUTION="$2"
-                    shift 2
-                    ;;
                 -e|--env)
                     CUSTOM_ENV_VARS+=("$2")
                     shift 2
@@ -97,7 +90,7 @@ arch
                     ;;
                 *)
                     echo "❌ 未知参数: $1"
-                    echo "使用 $0 --help 查看帮助信息"
+                    echo "使用 $0 --help 查看使用信息"
                     exit 1
                     ;;
             esac
@@ -112,10 +105,10 @@ arch
     OS=$(uname -s)
     ARCH=$(uname -m)
 
-    echo "检测到系统: $OS"
-    echo "检测到架构: $ARCH"
+    echo "操作系统: $OS"
+    echo "架构: $ARCH"
 
-    # 函数：检查命令是否存在
+    # Function: Check if a command exists
     check_command() {
         if ! command -v "$1" &> /dev/null; then
             echo "❌ $1 未安装"
@@ -126,14 +119,14 @@ arch
         fi
     }
 
-    # 函数：检查 Docker 是否安装
+    #功能：检查Docker是否安装
     check_docker() {
         if check_command docker; then
-            echo "Docker 版本: $(docker --version)"
+            echo "Docker版本: $(docker --version)"
             return 0
         else
-            echo "❌ Docker 未安装，请先安装 Docker"
-            echo "请访问以下链接安装 Docker:"
+            echo "❌ Docker未安装，请先安装Docker"
+            echo "请访问以下链接安装Docker:"
             case $OS in
                 "Darwin")
                     echo "  macOS: https://docs.docker.com/desktop/install/mac-install/"
@@ -142,14 +135,14 @@ arch
                     echo "  Linux: https://docs.docker.com/engine/install/"
                     ;;
                 *)
-                    echo "  通用: https://docs.docker.com/get-docker/"
+                    echo "  other: https://docs.docker.com/get-docker/"
                     ;;
             esac
             return 1
         fi
     }
 
-    # 函数：安装 LiveKit Server
+    # 安装 LiveKit Server
     install_livekit() {
         echo "=========================================="
         echo "安装 LiveKit Server"
@@ -167,7 +160,7 @@ arch
                     brew update && brew install livekit
                 else
                     echo "❌ Homebrew 未安装，请先安装 Homebrew 或手动安装 LiveKit Server"
-                    echo "Homebrew 安装: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+                    echo "Homebrew 安装命令: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
                     return 1
                 fi
                 ;;
@@ -183,7 +176,7 @@ arch
         esac
     }
 
-    # 函数：确定 Docker 镜像
+    # Function: 获取 Docker 镜像
     get_docker_image() {
         case $ARCH in
             "x86_64"|"amd64")
@@ -200,20 +193,20 @@ arch
         esac
     }
 
-    # 函数：拉取 VoceSpace 镜像
+    # Function: 拉取 VoceSpace image
     pull_vocespace_image() {
         echo "=========================================="
-        echo "拉取 VoceSpace Docker 镜像"
+        echo "拉取 VoceSpace Docker image"
         echo "=========================================="
         
         IMAGE=$(get_docker_image)
         echo "拉取镜像: $IMAGE"
-        
+
         docker pull "$IMAGE"
-        echo "✅ 镜像拉取完成"
+        echo "✅ 镜像拉取成功"
     }
 
-    # 函数：启动 VoceSpace 容器
+    # Function: 启动 VoceSpace 容器
     start_vocespace_container() {
         echo "=========================================="
         echo "启动 VoceSpace 容器"
@@ -221,37 +214,31 @@ arch
         
         IMAGE=$(get_docker_image)
         CONTAINER_NAME="vocespace"
-        
-        # 构建环境变量参数
+
+        # Build environment variable arguments
         ENV_ARGS=()
-        
-        # 添加分辨率环境变量
-        if [[ -n "$RESOLUTION" ]]; then
-            ENV_ARGS+=("-e" "NEXT_PUBLIC_RESOLUTION=$RESOLUTION")
-            echo "设置分辨率: $RESOLUTION"
-        fi
-        
-        # 添加自定义环境变量
+
+        # Add custom environment variables
         for env_var in "${CUSTOM_ENV_VARS[@]}"; do
             ENV_ARGS+=("-e" "$env_var")
             echo "设置环境变量: $env_var"
         done
-        
-        # 检查容器是否已存在
+
+        # Check if the container already exists
         if docker ps -a --format "table {{.Names}}" | grep -q "^$CONTAINER_NAME$"; then
-            echo "检测到已存在的容器 $CONTAINER_NAME"
-            read -p "是否要停止并移除现有容器？(y/n): " -n 1 -r
+            echo "检测到现有容器 $CONTAINER_NAME"
+            read -p "是否要停止并删除现有容器? (y/n): " -n 1 -r
             echo
             if [[ $REPLY =~ ^[Yy]$ ]]; then
-                echo "停止并移除现有容器..."
+                echo "停止并删除现有容器..."
                 docker stop "$CONTAINER_NAME" 2>/dev/null || true
                 docker rm "$CONTAINER_NAME" 2>/dev/null || true
             else
-                echo "取消操作"
+                echo "操作已取消"
                 return 1
             fi
         fi
-        
+
         echo "启动新容器..."
         if [[ ${#ENV_ARGS[@]} -gt 0 ]]; then
             echo "使用环境变量: ${ENV_ARGS[*]}"
@@ -266,22 +253,22 @@ arch
                 --name "$CONTAINER_NAME" \
                 "$IMAGE"
         fi
-        
-        echo "✅ VoceSpace 容器启动完成"
+
+        echo "✅ VoceSpace 容器已启动"
         echo "容器名称: $CONTAINER_NAME"
-        echo "访问地址: http://localhost:3000"
+        echo "访问 URL: http://localhost:3000"
     }
 
-    # 函数：启动 LiveKit Server
+    # Function: 启动 LiveKit Server
     start_livekit_server() {
         echo "=========================================="
         echo "启动 LiveKit Server"
         echo "=========================================="
-        
-        echo "检查 LiveKit Server 是否已在运行..."
+
+        echo "检查 LiveKit Server 是否正在运行..."
         if pgrep -f "livekit-server" > /dev/null; then
             echo "⚠️  LiveKit Server 已在运行"
-            read -p "是否要重启 LiveKit Server？(y/n): " -n 1 -r
+            read -p "是否要重启 LiveKit Server? (y/n): " -n 1 -r
             echo
             if [[ $REPLY =~ ^[Yy]$ ]]; then
                 echo "停止现有的 LiveKit Server..."
@@ -292,17 +279,17 @@ arch
                 return 0
             fi
         fi
-        
+
         echo "启动 LiveKit Server..."
         echo "注意: LiveKit Server 将在后台运行"
-        echo "如需停止，请使用: pkill -f livekit-server"
-        
+        echo "要停止它，请使用: pkill -f livekit-server"
+
         nohup livekit-server --dev --bind 0.0.0.0 > livekit-server.log 2>&1 &
         
         sleep 3
         
         if pgrep -f "livekit-server" > /dev/null; then
-            echo "✅ LiveKit Server 启动完成"
+            echo "✅ LiveKit Server 启动成功"
             echo "日志文件: $(pwd)/livekit-server.log"
         else
             echo "❌ LiveKit Server 启动失败"
@@ -311,10 +298,10 @@ arch
         fi
     }
 
-    # 函数：显示状态
+    # Function: Show Status
     show_status() {
         echo "=========================================="
-        echo "部署状态检查"
+        echo "当前状态"
         echo "=========================================="
         
         echo "Docker 容器状态:"
@@ -323,65 +310,64 @@ arch
         echo ""
         echo "LiveKit Server 状态:"
         if pgrep -f "livekit-server" > /dev/null; then
-            echo "✅ LiveKit Server 正在运行"
+            echo "✅ LiveKit Server 已在运行"
         else
-            echo "❌ LiveKit Server 未运行"
+            echo "❌ LiveKit Server 未在运行"
         fi
         
         echo ""
         echo "=========================================="
         echo "访问信息"
         echo "=========================================="
-        echo "VoceSpace 应用: http://localhost:3000"
+        echo "VoceSpace App: http://localhost:3000"
         echo "LiveKit Server: ws://localhost:7880"
         echo ""
-        echo "如需查看容器日志: docker logs vocespace"
-        echo "如需查看 LiveKit 日志: tail -f livekit-server.log"
+        echo "要查看容器日志: docker logs vocespace"
+        echo "要查看 LiveKit 日志: tail -f livekit-server.log"
     }
 
-    # 主函数
+    # Main function
     main() {
-        # 解析命令行参数
+        # Parse command line arguments
         parse_args "$@"
-        
-        echo "开始部署流程..."
-        
-        # 显示配置信息
-        if [[ -n "$RESOLUTION" ]] || [[ ${#CUSTOM_ENV_VARS[@]} -gt 0 ]]; then
+
+        echo "启动部署过程..."
+
+        # Show configuration information
+        if [[ ${#CUSTOM_ENV_VARS[@]} -gt 0 ]]; then
             echo "=========================================="
-            echo "配置信息"
+            echo "配置文件信息"
             echo "=========================================="
-            [[ -n "$RESOLUTION" ]] && echo "分辨率: $RESOLUTION"
             for env_var in "${CUSTOM_ENV_VARS[@]}"; do
                 echo "环境变量: $env_var"
             done
             echo ""
         fi
-        
-        # 检查 Docker
+
+        # Check Docker
         if ! check_docker; then
             exit 1
         fi
-        
-        # 安装 LiveKit Server
+
+        # Install LiveKit Server
         if ! install_livekit; then
             echo "❌ LiveKit Server 安装失败"
             exit 1
         fi
-        
-        # 拉取镜像
+
+        # Pull Docker image
         if ! pull_vocespace_image; then
-            echo "❌ 镜像拉取失败"
+            echo "❌ Docker 镜像拉取失败"
             exit 1
         fi
-        
-        # 启动容器
+
+        # Start container
         if ! start_vocespace_container; then
             echo "❌ 容器启动失败"
             exit 1
         fi
-        
-        # 启动 LiveKit Server
+
+        # Start LiveKit Server
         if ! start_livekit_server; then
             echo "❌ LiveKit Server 启动失败"
             exit 1
@@ -390,20 +376,21 @@ arch
         echo ""
         echo "等待服务启动..."
         sleep 5
-        
-        # 显示状态
+
+        # Show status
         show_status
         
         echo ""
-        echo "=========================================="
+        echo "==========================================="
         echo "🎉 部署完成！"
-        echo "=========================================="
+        echo "==========================================="
         echo "请在浏览器中访问 http://localhost:3000"
-        echo "如遇到问题，请查看相关日志文件"
+        echo "如果您遇到任何问题，请查看相关日志文件"
     }
 
-    # 运行主函数
+    # Run main function
     main "$@"
+
     ```
   </Tab>
   <Tab label="Windows">
@@ -415,7 +402,6 @@ arch
     REM 适用于 Windows 系统
 
     REM 默认环境变量
-    set RESOLUTION=
     set ENV_VARS=
 
     REM 显示使用帮助
@@ -427,22 +413,20 @@ arch
     echo 用法: %~nx0 [选项]
     echo.
     echo 选项:
-    echo   -r, --resolution RESOLUTION    设置分辨率 (例如: 4k, 1080p, 720p)
     echo   -e, --env KEY=VALUE            设置自定义环境变量
     echo   -h, --help                     显示此帮助信息
     echo.
     echo 示例:
-    echo   %~nx0 -r 4k
-    echo   %~nx0 --resolution 1080p
-    echo   %~nx0 -r 4k -e CUSTOM_VAR=value
     echo   %~nx0 -e NEXT_PUBLIC_RESOLUTION=4k
+    echo   %~nx0 -e NEXT_PUBLIC_RESOLUTION=1080p
+    echo   %~nx0 -e NEXT_PUBLIC_RESOLUTION=4k -e CUSTOM_VAR=value
+    echo   %~nx0 -e NEXT_PUBLIC_MAXBITRATE=8000 -e NEXT_PUBLIC_RESOLUTION=720p
     echo.
-    echo 支持的分辨率:
-    echo   - 4k
-    echo   - 2k
-    echo   - 1080p
-    echo   - 720p
-    echo   - 480p
+    echo 常用环境变量:
+    echo   - NEXT_PUBLIC_RESOLUTION: 设置分辨率 (4k, 2k, 1080p, 720p, 480p)
+    echo   - NEXT_PUBLIC_MAXBITRATE: 设置最大比特率
+    echo   - NEXT_PUBLIC_MAXFRAMERATE: 设置最大帧率
+    echo   - NEXT_PUBLIC_PRIORITY: 设置优先级
     echo.
     goto :eof
 
@@ -451,18 +435,6 @@ arch
     if "%~1"=="" goto start_main
     if "%~1"=="-h" goto show_help
     if "%~1"=="--help" goto show_help
-    if "%~1"=="-r" (
-        set RESOLUTION=%~2
-        shift
-        shift
-        goto parse_args
-    )
-    if "%~1"=="--resolution" (
-        set RESOLUTION=%~2
-        shift
-        shift
-        goto parse_args
-    )
     if "%~1"=="-e" (
         if "!ENV_VARS!"=="" (
             set ENV_VARS=-e %~2
@@ -494,16 +466,6 @@ arch
     echo ==========================================
     echo VoceSpace 本地部署自动化脚本 (Windows)
     echo ==========================================
-
-    REM 如果设置了分辨率，添加到环境变量
-    if not "%RESOLUTION%"=="" (
-        echo 设置分辨率: %RESOLUTION%
-        if "!ENV_VARS!"=="" (
-            set ENV_VARS=-e NEXT_PUBLIC_RESOLUTION=%RESOLUTION%
-        ) else (
-            set ENV_VARS=!ENV_VARS! -e NEXT_PUBLIC_RESOLUTION=%RESOLUTION%
-        )
-    )
 
     REM 显示将要使用的环境变量
     if not "!ENV_VARS!"=="" (
@@ -643,6 +605,7 @@ arch
     echo 如遇到问题，请查看相关日志
 
     pause
+
     ```
   </Tab>
 </Tabs>

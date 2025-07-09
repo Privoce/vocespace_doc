@@ -6,9 +6,9 @@ This document describes how to deploy VoceSpace using the provided automation sc
 
 ## Script files
 
-- `vocespace_deploy.sh` - for Linux and macOS systems
+- `local_deploy.sh` - for Linux and macOS systems
 
-- `vocespace_deploy.bat` - for Windows systems
+- `local_deploy.bat` - for Windows systems
 
 > [!WARNING]
 > **This deployment script is only suitable for local quick deployment!**
@@ -33,28 +33,40 @@ Download the corresponding file for your operating system type before starting
 Of course, you can also copy it directly from our documentation website: [Help-Script](./help#local-deployment-scripts)
 
 <Tabs>
-   <Tab label="Linux/macOS">
+   <Tab label="Linux">
    ```bash
    # Basic deployment
-   sh ./vocespace_deploy.sh
+   bash ./local_deploy.sh
 
    # Set the resolution to 4K
-   sh ./vocespace_deploy.sh -r 4k
+   bash ./local_deploy.sh -r 4k
 
    # Set custom environment variables
-   sh ./vocespace_deploy.sh -e CUSTOM_VAR=<value>
+   bash ./local_deploy.sh -e CUSTOM_VAR=<value>
+   ```
+   </Tab>
+   <Tab label="macOS">
+   ```bash
+   # Basic deployment
+   sh ./local_deploy.sh
+
+   # Set the resolution to 4K
+   sh ./local_deploy.sh -r 4k
+
+   # Set custom environment variables
+   sh ./local_deploy.sh -e CUSTOM_VAR=<value>
    ```
    </Tab>
    <Tab label="Windows">
    ```cmd
    # Basic deployment
-   vocespace_deploy.bat
+   local_deploy.bat
 
    # Set the resolution to 4K
-   vocespace_deploy.bat -r 4k
+   local_deploy.bat -r 4k
 
    # Set custom environment variables
-   vocespace_deploy.bat -e CUSTOM_VAR=<value>
+   local_deploy.bat -e CUSTOM_VAR=<value>
    ```
    </Tab>
 </Tabs>
