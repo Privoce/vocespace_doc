@@ -4,136 +4,201 @@ import { Tab, Tabs } from "@theme";
 
 本文档说明如何使用提供的自动化脚本来部署 VoceSpace。
 
-## 脚本文件
+支持一键部署 VoceSpace + LiveKit Server + Redis。
 
-- `local_deploy.sh` - 适用于 Linux 和 macOS 系统
-- `local_deploy.bat` - 适用于 Windows 系统
+## 文件说明
 
-> [!WARNING]
-> **该部署脚本只适合本地快速部署!**
-> 1. **首次运行**: 容器启动后会自动下载依赖，需要等待片刻
-> 2. **端口占用**: 确保端口 3000 和 7880 没有被其他应用占用
-> 3. **网络访问**: 本地部署仅支持本地访问，如需公网访问请参考其他部署方式
-> 4. **权限问题**: Linux/macOS 系统可能需要 sudo 权限来运行 Docker 命令
+- `vocespace_deploy.sh` - Linux/macOS 自动化部署脚本
+- `vocespace_deploy.bat` - Windows 自动化部署脚本
+- `README.md` - 本说明文档
 
+## 功能特性
 
-## 先决条件
+- ✅ 自动检测系统架构和宿主机IP
+- ✅ 支持自定义配置文件
+- ✅ 一键安装和启动所有必要组件
+- ✅ 智能处理已存在的服务
+- ✅ 详细的状态检查和日志输出
+- ✅ 支持强制重装和跳过组件
 
-1. Docker
-2. brew (macOS)
+## 使用方法
 
-## 基本用法
+### Linux/macOS
 
-在开始前对应您的操作系统类型下载对应的文件
-- Linux/macOS: https://vocespace.com/local_deploy/local_deploy_zh.sh
-- Windows: https://vocespace.com/local_deploy/local_deploy_zh.bat
-- README: https://vocespace.com/local_deploy/README_zh.md
-- README index.html: https://vocespace.com/local_deploy/index_zh.html
+```bash
+# 基本使用 - 使用默认配置
+./vocespace_deploy.sh
 
-当然您也可以直接在我们的文档网站进行复制: [帮助-脚本](./help#本地部署脚本)
+# 使用自定义配置文件
+./vocespace_deploy.sh --config ./my-config.json
 
-<Tabs>
-   <Tab label="Linux">
-    ```bash
-    # 基本部署
-    bash ./local_deploy.sh
+# 指定宿主机IP
+./vocespace_deploy.sh --host-ip 192.168.1.100
 
-    # 设置分辨率为 4K
-    bash ./local_deploy.sh -e NEXT_PUBLIC_RESOLUTION=4k
+# 强制重新安装所有组件
+./vocespace_deploy.sh --force
 
-    # 设置自定义环境变量
-    bash ./local_deploy.sh -e CUSTOM_VAR=<value>
-    ```
-  </Tab>
-  <Tab label="macOS">
-    ```bash
-    # 基本部署
-    sh ./local_deploy.sh
+# 跳过某些组件的安装
+./vocespace_deploy.sh --skip-redis --skip-livekit
 
-    # 设置分辨率为 4K
-    sh ./local_deploy.sh -e NEXT_PUBLIC_RESOLUTION=4k
+# 组合使用
+./vocespace_deploy.sh --config ./config.json --host-ip 192.168.1.100 --force
+```
 
-    # 设置自定义环境变量
-    sh ./local_deploy.sh -e CUSTOM_VAR=<value>
-    ```
-  </Tab>
-  <Tab label="Windows">
-    ```cmd
-    # 基本部署
-    local_deploy.bat
+### Windows
 
-    # 设置分辨率为 4K
-    local_deploy.bat -e NEXT_PUBLIC_RESOLUTION=4k
+```cmd
+REM 基本使用 - 使用默认配置
+vocespace_deploy.bat
 
-    # 设置自定义环境变量
-    local_deploy.bat -e CUSTOM_VAR=<value>
-    ```
-  </Tab>
-</Tabs>
+REM 使用自定义配置文件
+vocespace_deploy.bat --config ./my-config.json
 
-## 参数说明
+REM 指定宿主机IP
+vocespace_deploy.bat --host-ip 192.168.1.100
 
-### 分辨率选项 (-r, --resolution)
+REM 强制重新安装所有组件
+vocespace_deploy.bat --force
 
-设置 VoceSpace 的默认分辨率：
+REM 跳过某些组件的安装
+vocespace_deploy.bat --skip-redis --skip-livekit
+```
 
-- `4k` - 4K 分辨率
-- `2k` - 2k 分辨率
-- `1080p` - 1080p 分辨率
-- `720p` - 720p 分辨率
-- `480p` - 480p 分辨率
+## 命令行参数
 
-当使用分辨率选项时，脚本会自动设置 `NEXT_PUBLIC_RESOLUTION` 环境变量。
+| 参数 | 说明 | 示例 |
+|------|------|------|
+| `--config FILE` | 指定配置文件路径 | `--config ./vocespace.conf.json` |
+| `--host-ip IP` | 指定宿主机IP地址 | `--host-ip 192.168.1.100` |
+| `--force` | 强制重新安装所有组件 | `--force` |
+| `--skip-redis` | 跳过 Redis 安装 | `--skip-redis` |
+| `--skip-livekit` | 跳过 LiveKit Server 安装 | `--skip-livekit` |
+| `-h, --help` | 显示帮助信息 | `--help` |
 
-### 环境变量选项 (-e, --env)
+## 配置文件格式
 
-设置自定义环境变量，格式为 `KEY=VALUE`。可以多次使用此选项来设置多个环境变量。
+脚本支持 JSON 格式的配置文件，默认配置文件示例：
 
-常用环境变量：
+```json
+{
+  "livekit": {
+    "key": "devkey",
+    "secret": "secret",
+    "url": "ws://YOUR_IP:7880"
+  },
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "medium",
+  "redis": {
+    "enabled": true,
+    "host": "YOUR_IP",
+    "port": 6379,
+    "password": "vocespace",
+    "db": 0
+  },
+  "server_url": "localhost"
+}
+```
 
-- `LIVEKIT_API_KEY` - LiveKit API 密钥
-- `LIVEKIT_API_SECRET` - LiveKit API 密钥
-- `LIVEKIT_URL` - LiveKit 连接地址
-- `NEXT_PUBLIC_BASE_PATH` - 地址前缀
-- `PORT` - 端口IP
-- `HOST` - 主机地址
+> **注意**: 脚本会自动将配置文件中的 `YOUR_IP` 替换为实际的宿主机IP地址。
 
-## 脚本功能
+## 部署流程
 
-这些脚本会自动执行以下步骤：
+脚本会按以下顺序执行部署：
 
-1. **检查 Docker 安装**
-   - 验证 Docker 是否已安装
-   - 显示 Docker 版本信息
+1. **环境检查**
+   - 检测操作系统和架构
+   - 检查 Docker 安装和运行状态
+   - 自动检测或验证宿主机IP
 
-2. **安装 LiveKit Server**
-   - macOS: 通过 Homebrew 安装
-   - Linux: 通过官方安装脚本安装
-   - Windows: 提供手动安装指引
+2. **配置处理**
+   - 验证配置文件存在性和格式
+   - 自动创建默认配置（如未指定）
+   - 更新配置中的IP地址
 
-3. **检测系统架构**
-   - 自动检测 CPU 架构（AMD64/ARM64）
-   - 选择对应的 Docker 镜像
+3. **组件安装**
+   - 安装 Redis (可跳过)
+   - 安装 LiveKit Server (可跳过)
 
-4. **拉取 Docker 镜像**
-   - AMD64: `privoce/vocespace:latest`
-   - ARM64: `privoce/vocespace:latest_arm`
+4. **镜像和服务**
+   - 拉取对应架构的 VoceSpace Docker 镜像
+   - 启动 Redis 服务
+   - 启动 LiveKit Server
+   - 启动 VoceSpace 容器
 
-5. **启动 VoceSpace 容器**
-   - 映射端口 3000:3000
-   - 应用用户指定的环境变量
-   - 处理现有容器的冲突
+5. **状态检查**
+   - 验证所有服务运行状态
+   - 显示访问地址和管理命令
 
-6. **启动 LiveKit Server**
-   - 在开发模式下启动
-   - 绑定到所有网络接口 (0.0.0.0)
+## 服务端口
 
-7. **显示部署状态**
-   - 容器运行状态
-   - 访问地址和端口信息
-   - 日志查看指令
-## 访问应用
+部署完成后，以下端口将被使用：
 
-部署完成后，您可以通过以下地址访问 VoceSpace：
+| 服务 | 端口 | 描述 |
+|------|------|------|
+| VoceSpace | 3000 | 主应用访问端口 |
+| LiveKit Server | 7880 | WebRTC 信令服务 |
+| LiveKit Server | 7881 | WebRTC 数据传输 |
+| Redis | 6379 | 缓存和会话存储 |
 
-- **VoceSpace 应用**: http://localhost:3000 ｜ http://127.0.0.1:3000
+## 故障排除
+
+### 常见问题
+
+1. **Docker 未启动**
+   ```
+   ❌ Docker 未运行，请启动 Docker 服务
+   ```
+   - Linux: `sudo systemctl start docker`
+   - macOS/Windows: 启动 Docker Desktop
+
+2. **端口冲突**
+   ```
+   Error response from daemon: port is already allocated
+   ```
+   - 检查端口占用: `lsof -i :3000`
+   - 停止冲突服务或使用 `--force` 参数
+
+3. **配置文件格式错误**
+   ```
+   ❌ 配置文件JSON格式错误
+   ```
+   - 使用 JSON 验证工具检查格式
+   - 确保没有多余的逗号或引号
+
+4. **IP地址检测失败**
+   ```
+   ❌ 无法检测到宿主机IP
+   ```
+   - 手动指定IP: `--host-ip YOUR_IP`
+   - 检查网络连接状态
+
+### 日志查看
+
+- **VoceSpace 容器日志**: `docker logs vocespace`
+- **LiveKit Server 日志**: `tail -f livekit-server.log`
+- **Redis 日志**: `tail -f redis.log`
+
+### 服务管理
+
+- **停止 VoceSpace**: `docker stop vocespace`
+- **停止 LiveKit**: `pkill -f livekit-server`
+- **停止 Redis**: `pkill -f redis-server`
+
+- **重启 VoceSpace**: `docker restart vocespace`
+- **查看容器状态**: `docker ps`
+
+## 系统要求
+
+### 最低要求
+- **CPU**: 2核心
+- **内存**: 4GB RAM
+- **磁盘**: 10GB 可用空间
+- **网络**: 稳定的互联网连接
+
+### 支持的系统
+- **Linux**: Ubuntu 18.04+, CentOS 7+, Debian 10+
+- **macOS**: 10.14+
+- **Windows**: Windows 10/11 (需要 WSL2 或 Docker Desktop)

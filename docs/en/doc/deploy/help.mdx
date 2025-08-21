@@ -35,6 +35,15 @@ arch
 - If the output is `aarch64` or `arm64`, it means the system is based on ARM64 architecture.
 - If the output is `armv7l` or similar, it means the system is based on ARMv7 architecture.
 
+## How to get key and secret
+
+```bash
+docker pull livekit/generate
+docker run --rm -it -v$PWD:/output livekit/generate
+```
+
+Through `livekit/generate` you will get a `livekit.yaml` file, which is the configuration file for your livekit-server, and the key and secret will be generated in it.
+
 ## How to improve the quality of video/screen sharing
 
 | Resolution | Pixels | Frame rate | Encoder | Recommended bitrate | High quality bitrate | Extreme bitrate |

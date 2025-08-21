@@ -4,24 +4,71 @@ import { Tab, Tabs } from "@theme";
 
 通过本指南，你将学会如何使用 Docker 和 Nginx 将应用正式部署至生产环境，并配置 HTTPS 证书保障通信安全。
 
+**[如何获得的key和secret?](./help#如何获取key和secret)**
 
-## 1. 使用 Docker 本地部署应用
+## 1. 复制基础配置
 
-### 步骤说明
+以下是vocespace的基础配置，在启动容器前你需要将该配置复制并在启动时指定
+
+```json
+{
+  "livekit": {
+    "key": "devkey",
+    "secret": "secret",
+    "url": "wss://your.server.name"
+  },
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "medium",
+  "redis": { 
+    "enabled": true, 
+    "host": "your.ip", 
+    "port": 6379, 
+    "password": "vocespace", 
+    "db": 0 
+  },
+  "server_url": "your.server.name"
+}
+```
+
+> [!WARNING]
+>
+> `your.ip`: 用户宿主机的IP地址，可以使用`ifconfig | grep inet`进行查看
+> ```bash
+> inet 127.0.0.1 netmask 0xff000000
+> inet 192.168.31.138 netmask 0xffffff00 broadcast 192.168.31.255
+> ```
+> 在这个例子中 `192.168.31.138` 就是你的宿主机IP
+> 
+> `your.server.name`: 用于部署的域名
+
+## 2. 使用 Docker 部署应用
+
+### 获取 VoceSpace 镜像
+
+VoceSpace含有两种镜像:
+- amd: `privoce/vocespace:latest`
+- arm: `privoce/vocespace:latest_arm`
+
+所以您需要知道自己当前的服务器架构进行选择, 见: [help-查看自己的linux架构](/zh/doc/deploy/help#查看自己的linux架构)
+
+```shell
+# amd
+docker pull privoce/vocespace:latest
+# arm
+docker pull privoce/vocespace:latest_arm
+```
+
+### 启动容器
 
 在开始配置 Nginx 反向代理前，我们需要先将后端服务容器运行起来。
-
-> [!INFO]
-> 详细部署方式请参考文档：[本地部署指南](/zh/doc/deploy/local_docker)
-
-### 示例命令
 
 ```bash
 docker run -d \
   -p 3000:3000 \
-  -e SERVER_NAME=your.server.name \
-  -e HOST=your.ip \
-  -e LIVEKIT_URL=wss://your.server.name \
+  -v ${PWD}/vocespace.conf.json:/app/vocespace.conf.json \
   --name vocespace \
   privoce/vocespace:latest
 ```
@@ -29,15 +76,13 @@ docker run -d \
 > [!NOTE]
 >
 > * `-p 3000:3000`：将容器的 3000 端口映射至宿主机 3000 端口。
-> * `-e SERVER_NAME=your.server.name`：设置服务运行的主机名，供应用内部识别。
-> * `-e HOST=your.ip=your.ip`: 设置服务器ip host
-> * `-e LIVEKIT_URL=wss://your.server.name`: wss服务连接地址
+> * `-v ${PWD}/vocespace.conf.json:/app/vocespace.conf.json`: 将配置进行映射
 > * `--name`：给容器命名，便于后续管理。
 
 
-## 2. 安装并配置 Nginx
+## 3. 安装并配置 Nginx
 
-### 2.1 安装 Nginx 与 Certbot
+### 3.1 安装 Nginx 与 Certbot
 
 确保系统更新，并安装所需软件包：
 
@@ -52,7 +97,7 @@ apt install nginx certbot python3-certbot-nginx -y
 > * `certbot` 和 `python3-certbot-nginx` 是用于自动配置 HTTPS 的工具。
 
 
-### 2.2 配置 `nginx.conf`（全局配置，可忽略）
+### 3.2 配置 `nginx.conf`（全局配置，可忽略）
 
 路径：`/etc/nginx/nginx.conf`
 
@@ -91,7 +136,7 @@ http {
 
 ---
 
-### 2.3 配置站点文件（虚拟主机配置）
+### 3.3 配置站点文件（虚拟主机配置）
 
 路径建议：`/etc/nginx/sites-enabled/vocespace` 或 `/etc/nginx/conf.d/vocespace`
 
@@ -112,7 +157,7 @@ server {
     return 404;
 }
 ```
-### 2.4 使用 Certbot 申请 HTTPS 证书
+### 3.4 使用 Certbot 申请 HTTPS 证书
 
 在 DNS 服务商中确保域名已正确解析至服务器 IP。
 
@@ -134,7 +179,7 @@ nginx -t
 systemctl reload nginx
 ```
 
-### 2.5 补全https的配置
+### 3.5 补全https的配置
 
 ```nginx
 # HTTPS 反向代理配置
@@ -190,7 +235,7 @@ server {
 > 其中ssl的配置由certbot生成
 
 
-### 2.4 启动并检测 Nginx 状态
+### 3.6 启动并检测 Nginx 状态
 
 ```bash
 # 检测配置是否正确
@@ -202,7 +247,7 @@ systemctl reload nginx
 systemctl restart nginx
 ```
 
-## 3. 启动 livekit-server
+## 4. 启动 livekit-server
 
 和本地部署一样您同样需要启动livekit-server来支持webrtc, 您可以选择和本地部署一样下载livekit进行启动，也可以使用docker部署
 
@@ -297,6 +342,30 @@ systemctl restart nginx
       --config /etc/livekit.yaml
     ```
   </Tab>
+</Tabs>
+
+## 5. 下载并启动redis
+
+<Tabs>
+    <Tab label="Macos">
+    ```bash
+    brew install redis
+    brew services start redis -- --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+    ```
+    </Tab>
+    <Tab label="Windows" style={{padding: "6px"}}>
+        点击下载[Redis-Windows](https://github.com/tporadowski/redis/releases/download/v5.0.14.1/Redis-x64-5.0.14.1.msi)
+        ```bash
+        redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+        ```
+    </Tab>
+    <Tab label="Linux">
+    ```bash
+    apt install redis-server
+    redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+    systemctl restart redis
+    ```
+    </Tab>
 </Tabs>
 
 ## 云服务器说明

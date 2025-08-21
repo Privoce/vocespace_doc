@@ -1,6 +1,6 @@
 export const EN_US = {
   // hero
-  header: "🥳 VoceSpace",
+  header: "🥳 VoceSpace 0.2.0",
   rs: "/rs.png",
   heroTitle: "VoceSpace",
   heroSlogan: "Secure video calls under your domain and brand",

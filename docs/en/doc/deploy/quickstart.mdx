@@ -2,136 +2,206 @@ import { Tab, Tabs } from "@theme";
 
 # VoceSpace QuickStart
 
-This document describes how to deploy VoceSpace using the provided automation script.
+This document describes how to use the provided automation script to deploy VoceSpace.
 
-## Script files
+Support for one-click deployment of VoceSpace + LiveKit Server + Redis.
 
-- `local_deploy.sh` - for Linux and macOS systems
+## File Description
 
-- `local_deploy.bat` - for Windows systems
+- `vocespace_deploy.sh` - Linux/macOS automated deployment script
+- `vocespace_deploy.bat` - Windows automated deployment script
+- `README.md` - Documentation
 
-> [!WARNING]
-> **This deployment script is only suitable for local quick deployment!**
-> 1. **First run**: After the container starts, it will automatically download dependencies. You need to wait for a while
-> 2. **Port occupation**: Make sure ports 3000 and 7880 are not occupied by other applications
-> 3. **Network access**: Local deployment only supports local access. If you need public network access, please refer to other deployment methods
-> 4. **Permission issues**: Linux/macOS systems may require sudo permissions to run Docker commands
+## Features
 
-## Prerequisites
+- ✅ Automatic detection of system architecture and host IP
+- ✅ Support for custom configuration files
+- ✅ One-click installation and startup of all necessary components
+- ✅ Intelligent handling of existing services
+- ✅ Detailed status checking and log output
+- ✅ Support for force reinstallation and component skipping
 
-1. Docker
-2. brew (macOS)
+## Usage
 
-## Basic usage
+### Linux/macOS
 
-Download the corresponding file for your operating system type before starting
-- Linux/macOS: https://vocespace.com/local_deploy/local_deploy.sh
-- Windows: https://vocespace.com/local_deploy/local_deploy.bat
-- README: https://vocespace.com/local_deploy/README.md
-- README index.html: https://vocespace.com/local_deploy/index.html
+```bash
+# Basic usage - use default configuration
+./vocespace_deploy.sh
 
-Of course, you can also copy it directly from our documentation website: [Help-Script](./help#local-deployment-scripts)
+# Use custom configuration file
+./vocespace_deploy.sh --config ./my-config.json
 
-<Tabs>
-   <Tab label="Linux">
-   ```bash
-   # Basic deployment
-   bash ./local_deploy.sh
+# Specify host IP
+./vocespace_deploy.sh --host-ip 192.168.1.100
 
-   # Set the resolution to 4K
-   bash ./local_deploy.sh -e NEXT_PUBLIC_RESOLUTION=4k
+# Force reinstall all components
+./vocespace_deploy.sh --force
 
-   # Set custom environment variables
-   bash ./local_deploy.sh -e CUSTOM_VAR=<value>
+# Skip certain component installations
+./vocespace_deploy.sh --skip-redis --skip-livekit
+
+# Combined usage
+./vocespace_deploy.sh --config ./config.json --host-ip 192.168.1.100 --force
+```
+
+### Windows
+
+```cmd
+REM Basic usage - use default configuration
+vocespace_deploy.bat
+
+REM Use custom configuration file
+vocespace_deploy.bat --config ./my-config.json
+
+REM Specify host IP
+vocespace_deploy.bat --host-ip 192.168.1.100
+
+REM Force reinstall all components
+vocespace_deploy.bat --force
+
+REM Skip certain component installations
+vocespace_deploy.bat --skip-redis --skip-livekit
+```
+
+## Command Line Parameters
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `--config FILE` | Specify configuration file path | `--config ./vocespace.conf.json` |
+| `--host-ip IP` | Specify host machine IP address | `--host-ip 192.168.1.100` |
+| `--force` | Force reinstall all components | `--force` |
+| `--skip-redis` | Skip Redis installation | `--skip-redis` |
+| `--skip-livekit` | Skip LiveKit Server installation | `--skip-livekit` |
+| `-h, --help` | Show help information | `--help` |
+
+## Configuration File Format
+
+The script supports JSON format configuration files. Default configuration file example:
+
+```json
+{
+  "livekit": {
+    "key": "devkey",
+    "secret": "secret",
+    "url": "ws://YOUR_IP:7880"
+  },
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "medium",
+  "redis": {
+    "enabled": true,
+    "host": "YOUR_IP",
+    "port": 6379,
+    "password": "vocespace",
+    "db": 0
+  },
+  "server_url": "localhost"
+}
+```
+
+> **Note**: The script will automatically replace `YOUR_IP` in the configuration file with the actual host IP address.
+
+## Deployment Process
+
+The script executes deployment in the following order:
+
+1. **Environment Check**
+   - Detect operating system and architecture
+   - Check Docker installation and running status
+   - Auto-detect or validate host IP
+
+2. **Configuration Processing**
+   - Verify configuration file existence and format
+   - Auto-create default configuration (if not specified)
+   - Update IP addresses in configuration
+
+3. **Component Installation**
+   - Install Redis (skippable)
+   - Install LiveKit Server (skippable)
+
+4. **Images and Services**
+   - Pull VoceSpace Docker image for corresponding architecture
+   - Start Redis service
+   - Start LiveKit Server
+   - Start VoceSpace container
+
+5. **Status Check**
+   - Verify all service running status
+   - Display access addresses and management commands
+
+## Service Ports
+
+After deployment completion, the following ports will be used:
+
+| Service | Port | Description |
+|---------|------|-------------|
+| VoceSpace | 3000 | Main application access port |
+| LiveKit Server | 7880 | WebRTC signaling service |
+| LiveKit Server | 7881 | WebRTC data transmission |
+| Redis | 6379 | Cache and session storage |
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Docker not started**
    ```
-   </Tab>
-   <Tab label="macOS">
-   ```bash
-   # Basic deployment
-   sh ./local_deploy.sh
-
-   # Set the resolution to 4K
-   sh ./local_deploy.sh -e NEXT_PUBLIC_RESOLUTION=4k
-
-   # Set custom environment variables
-   sh ./local_deploy.sh -e CUSTOM_VAR=<value>
+   ❌ Docker is not running, please start Docker service
    ```
-   </Tab>
-   <Tab label="Windows">
-   ```cmd
-   # Basic deployment
-   local_deploy.bat
+   - Linux: `sudo systemctl start docker`
+   - macOS/Windows: Start Docker Desktop
 
-   # Set the resolution to 4K
-   local_deploy.bat -e NEXT_PUBLIC_RESOLUTION=4k
-
-   # Set custom environment variables
-   local_deploy.bat -e CUSTOM_VAR=<value>
+2. **Port conflict**
    ```
-   </Tab>
-</Tabs>
+   Error response from daemon: port is already allocated
+   ```
+   - Check port usage: `lsof -i :3000`
+   - Stop conflicting services or use `--force` parameter
 
-## Parameter Description
+3. **Configuration file format error**
+   ```
+   ❌ Configuration file JSON format error
+   ```
+   - Use JSON validation tools to check format
+   - Ensure no extra commas or quotes
 
-### Resolution Option (-r, --resolution)
+4. **IP address detection failure**
+   ```
+   ❌ Unable to detect host IP
+   ```
+   - Manually specify IP: `--host-ip YOUR_IP`
+   - Check network connection status
 
-Set the default resolution of VoceSpace:
+### Log Viewing
 
-- `4k` - 4K resolution
-- `2k` - 2k resolution
-- `1080p` - 1080p resolution
-- `720p` - 720p resolution
-- `480p` - 480p resolution
+- **VoceSpace container logs**: `docker logs vocespace`
+- **LiveKit Server logs**: `tail -f livekit-server.log`
+- **Redis logs**: `tail -f redis.log`
 
-When using the resolution option, the script will automatically set the `NEXT_PUBLIC_RESOLUTION` environment variable.
+### Service Management
 
-### Environment Variable Option (-e, --env)
+- **Stop VoceSpace**: `docker stop vocespace`
+- **Stop LiveKit**: `pkill -f livekit-server`
+- **Stop Redis**: `pkill -f redis-server`
 
-Set custom environment variables in the format of `KEY=VALUE`. You can use this option multiple times to set multiple environment variables.
+- **Restart VoceSpace**: `docker restart vocespace`
+- **View container status**: `docker ps`
 
-Common environment variables:
+## System Requirements
 
-- `LIVEKIT_API_KEY` - LiveKit API key
-- `LIVEKIT_API_SECRET` - LiveKit API key
-- `LIVEKIT_URL` - LiveKit connection address
-- `NEXT_PUBLIC_BASE_PATH` - Address prefix
-- `PORT` - Port IP
-- `HOST` - Host address
+### Minimum Requirements
+- **CPU**: 2 cores
+- **Memory**: 4GB RAM
+- **Disk**: 10GB available space
+- **Network**: Stable internet connection
 
-## Script function
-
-These scripts automatically perform the following steps:
-
-1. **Check Docker installation**
-- Verify that Docker is installed
-- Display Docker version information
-
-2. **Install LiveKit Server**
-- macOS: Install via Homebrew
-- Linux: Install via the official installation script
-- Windows: Provide manual installation instructions
-
-3. **Detect system architecture**
-- Automatically detect CPU architecture (AMD64/ARM64)
-- Select the corresponding Docker image
-
-4. **Pull Docker image**
-- AMD64: `privoce/vocespace:latest`
-- ARM64: `privoce/vocespace:latest_arm`
-
-5. **Start VoceSpace container**
-- Map port 3000:3000
-- Apply user-specified environment variables
-- Handle conflicts with existing containers
-
-6. **Start LiveKit Server**
-- Start in development mode
-- Bind to all network interfaces (0.0.0.0)
-
-7. **Show deployment status**
-- Container running status
-- Access address and port information
-- Log viewing instructions
+### Supported Systems
+- **Linux**: Ubuntu 18.04+, CentOS 7+, Debian 10+
+- **macOS**: 10.14+
+- **Windows**: Windows 10/11 (requires WSL2 or Docker Desktop)
 ## Access the application
 
 After deployment, you can access VoceSpace at the following address:

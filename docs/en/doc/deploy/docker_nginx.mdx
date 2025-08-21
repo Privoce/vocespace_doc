@@ -4,23 +4,71 @@ import { Tab, Tabs } from "@theme";
 
 Through this guide, you will learn how to use Docker and Nginx to officially deploy applications to the production environment and configure HTTPS certificates to ensure communication security.
 
-## 1. Use Docker to deploy applications locally
+**[How to get key and secret?](./help#how-to-get-key-and-secret)**
 
-### Steps
+## 1. Copy Basic Configuration
+
+The following is the basic configuration of vocespace. You need to copy this configuration and specify it when starting the container
+
+```json
+{
+  "livekit": {
+    "key": "devkey",
+    "secret": "secret",
+    "url": "wss://your.server.name"
+  },
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "medium",
+  "redis": { 
+    "enabled": true, 
+    "host": "your.ip", 
+    "port": 6379, 
+    "password": "vocespace", 
+    "db": 0 
+  },
+  "server_url": "your.server.name"
+}
+```
+
+> [!WARNING]
+>
+> `your.ip`: User host machine IP address, you can use `ifconfig | grep inet` to view
+> ```bash
+> inet 127.0.0.1 netmask 0xff000000
+> inet 192.168.31.138 netmask 0xffffff00 broadcast 192.168.31.255
+> ```
+> In this example `192.168.31.138` is your host machine IP
+> 
+> `your.server.name`: Domain name for deployment
+
+## 2. Use Docker to deploy applications
+
+### Get VoceSpace Images
+
+VoceSpace contains two images:
+- amd: `privoce/vocespace:latest`
+- arm: `privoce/vocespace:latest_arm`
+
+So you need to know your current server architecture to make a choice, see: [help-View your own Linux architecture](/doc/deploy/help#check-your-own-linux-architecture)
+
+```shell
+# amd
+docker pull privoce/vocespace:latest
+# arm
+docker pull privoce/vocespace:latest_arm
+```
+
+### Start Container
 
 Before starting to configure Nginx reverse proxy, we need to run the backend service container first.
-
-> [!INFO]
-> For detailed deployment methods, please refer to the document: [Local Deployment Guide](/zh/doc/deploy/local_docker)
-
-### Example command
 
 ```bash
 docker run -d \
   -p 3000:3000 \
-  -e SERVER_NAME=your.server.name \
-  -e HOST=your.ip \
-  -e LIVEKIT_URL=wss://your.server.name \
+  -v ${PWD}/vocespace.conf.json:/app/vocespace.conf.json \
   --name vocespace \
   privoce/vocespace:latest
 ```
@@ -28,9 +76,7 @@ docker run -d \
 > [!NOTE]
 >
 > * `-p 3000:3000`: Map the container's port 3000 to the host's port 3000.
-> * `-e SERVER_NAME=your.server.name`: Set the host name where the service runs for internal identification.
-> * `-e HOST=your.ip=your.ip`: Set the server ip host
-> * `-e LIVEKIT_URL=wss://your.server.name`: wss service connection address
+> * `-v ${PWD}/vocespace.conf.json:/app/vocespace.conf.json`: Map the configuration
 > * `--name`: Name the container for easy subsequent management.
 
 ## 2. Install and configure Nginx
@@ -292,6 +338,30 @@ Like local deployment, you also need to start livekit-server to support webrtc. 
       --config /etc/livekit.yaml
     ```
   </Tab>
+</Tabs>
+
+## 4. Download and start Redis
+
+<Tabs>
+    <Tab label="Macos">
+    ```bash
+    brew install redis
+    brew services start redis -- --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+    ```
+    </Tab>
+    <Tab label="Windows" style={{padding: "6px"}}>
+        Click to download [Redis-Windows](https://github.com/tporadowski/redis/releases/download/v5.0.14.1/Redis-x64-5.0.14.1.msi)
+        ```bash
+        redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+        ```
+    </Tab>
+    <Tab label="Linux">
+    ```bash
+    apt install redis-server
+    redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+    systemctl restart redis
+    ```
+    </Tab>
 </Tabs>
 
 ## Cloud Server Description

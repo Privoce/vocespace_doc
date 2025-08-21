@@ -87,18 +87,56 @@ docker pull privoce/vocespace:latest
 docker pull privoce/vocespace:latest_arm
 ```
 
-## 3. 启动容器
+## 3. 复制基础配置
+
+以下是vocespace的基础配置，在启动容器前你需要将该配置复制并在启动时指定
+
+```json
+{
+  "livekit": {
+    "key": "devkey",
+    "secret": "secret",
+    "url": "ws://your.ip:7880"
+  },
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "medium",
+  "redis": { 
+    "enabled": true, 
+    "host": "your.ip", 
+    "port": 6379, 
+    "password": "vocespace", 
+    "db": 0 
+  },
+  "server_url": "localhost"
+}
+```
+
+> [!WARNING]
+>
+> your.ip: 用户宿主机的IP地址，可以使用`ifconfig | grep inet`进行查看
+> ```bash
+> inet 127.0.0.1 netmask 0xff000000
+> inet 192.168.31.138 netmask 0xffffff00 broadcast 192.168.31.255
+> ```
+> 在这个例子中 `192.168.31.138` 就是你的宿主机IP
+
+
+## 4. 启动容器
 
 ```shell
 docker run -d \
 -p 3000:3000 \
+-v ${PWD}/vocespace.conf.json:/app/vocespace.conf.json \
 --name vocespace \
 privoce/vocespace:latest
 ```
 
 > [!NOTE]
 >
-> 容器启动后会自动下载所需依赖，需要等待片刻，依赖下载完成后会进行环境配置并启动服务
+> ⚠️`-v ${PWD}/vocespace.json:/app/vocespace.conf.json`: 将配置进行映射
 
 
 ### 输出
@@ -150,6 +188,30 @@ VoceSpace需要依赖livekit-server构建起webrtc以及其他相关服务
 ```
 livekit-server --dev --bind 0.0.0.0
 ```
+
+## 5. 下载并启动redis
+
+<Tabs>
+    <Tab label="Macos">
+    ```bash
+    brew install redis
+    brew services start redis -- --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+    ```
+    </Tab>
+    <Tab label="Windows" style={{padding: "6px"}}>
+        点击下载[Redis-Windows](https://github.com/tporadowski/redis/releases/download/v5.0.14.1/Redis-x64-5.0.14.1.msi)
+        ```bash
+        redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+        ```
+    </Tab>
+    <Tab label="Linux">
+    ```bash
+    apt install redis-server
+    redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+    systemctl restart redis
+    ```
+    </Tab>
+</Tabs>
 
 ## 云服务器说明
 
