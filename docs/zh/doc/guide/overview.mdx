@@ -9,15 +9,12 @@ import Container from "@theme/components/Container";
 
 ### 本地一键安装VoceSpace进行体验
 
-```bash
-curl https://vocespace.com/local_deploy/local_deploy.sh|bash
-```
-### 体验极致视频/屏幕分享
-4k + 90fps + 20Mbps + 高精度
+请将`your_ip`修改为真实`ip`
 
 ```bash
-curl -s https://vocespace.com/local_deploy/local_deploy.sh | bash -s -- -e NEXT_PUBLIC_RESOLUTION=4k -e NEXT_PUBLIC_MAXFRAMERATE=90 -e NEXT_PUBLIC_PRIORITY=high -e NEXT_PUBLIC_MAXBITRATE=20000000
+curl https://vocespace.com/local_deploy/local_deploy.sh|bash --host-ip your_ip
 ```
+
 
 ## 更多
 
