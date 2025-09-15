@@ -39,7 +39,7 @@ arch
 
 ```bash
 docker pull livekit/generate
-docker run --rm -it -v$PWD:/output livekit/generate
+docker run --rm -it -v $PWD:/output livekit/generate
 ```
 
 通过`livekit/generate`你会得到一个`livekit.yaml`文件，这个文件就是你的livekit-server的配置文件，key和secret就会生成在其中

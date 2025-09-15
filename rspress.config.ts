@@ -36,6 +36,12 @@ export default defineConfig({
         mode: "link",
         content: "https://github.com/Privoce/vocespace-client",
       },
+      {
+        icon: "wechat",
+        mode: "dom",
+        content:
+          '<div style="height: 100px; width: 100px;"><img src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/1e18fe5f59b60ead0da50d1d023aab98.png" alt="WeChat QR Code"></img></div>',
+      },
     ],
   },
   markdown: {

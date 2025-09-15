@@ -6,18 +6,21 @@ Caddy 比 Nginx 更简单，因为它可以自动申请证书。
 
 您需要先启动项目容器，然后再安装和配置 Caddy，否则证书申请可能会失败。
 
-**[如何获得的key和secret?](./help#如何获取key和secret)**
 
 ## 1. 复制基础配置
 
 以下是vocespace的基础配置，在启动容器前你需要将该配置复制并在启动时指定
+
+默认的 "key": `"devkey"`, "secret": `"secret"` 可以正常工作，但是，如果您想提高安全性和稳定性，可以从托管的 livekit 服务器生成密钥/密钥对。
+
+**[(可选) 如何获得的key和secret?](./help#如何获取key和secret)**
 
 ```json
 {
   "livekit": {
     "key": "devkey",
     "secret": "secret",
-    "url": "wss://your.server.name"
+    "url": "wss://your.server.name" // modify ⚠️
   },
   "codec": "vp9",
   "resolution": "1080p",
@@ -26,12 +29,12 @@ Caddy 比 Nginx 更简单，因为它可以自动申请证书。
   "priority": "medium",
   "redis": { 
     "enabled": true, 
-    "host": "your.ip", 
+    "host": "your.ip", // modify ⚠️
     "port": 6379, 
     "password": "vocespace", 
     "db": 0 
   },
-  "server_url": "your.server.name"
+  "server_url": "your.server.name" // modify ⚠️
 }
 ```
 
@@ -113,7 +116,7 @@ vim /etc/caddy/Caddyfile
 ```
 
 ```nginx
-your.server.name {
+your.server.name {  # modify ⚠️
     # webrtc
     handle /rtc* {
         reverse_proxy localhost:7880 {
@@ -183,6 +186,7 @@ your.server.name {
         port_range_end: 60000
         use_external_ip: true
         enable_loopback_candidate: false
+    # optional
     turn:
         enabled: false
         domain: turn.vocespace.xyz

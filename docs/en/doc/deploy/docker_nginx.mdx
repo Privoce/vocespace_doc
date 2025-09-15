@@ -4,18 +4,20 @@ import { Tab, Tabs } from "@theme";
 
 Through this guide, you will learn how to use Docker and Nginx to officially deploy applications to the production environment and configure HTTPS certificates to ensure communication security.
 
-**[How to get key and secret?](./help#how-to-get-key-and-secret)**
-
 ## 1. Copy Basic Configuration
 
 The following is the basic configuration of vocespace. You need to copy this configuration and specify it when starting the container
+
+The defaul "key": `"devkey"`, "secret": `"secret"` works well, however, if you want to improve security and stability, feel free to generate a key/secret pair from your hosted livekit-server.
+
+**[(Optional) How to get key and secret?](./help#how-to-get-key-and-secret)**
 
 ```json
 {
   "livekit": {
     "key": "devkey",
     "secret": "secret",
-    "url": "wss://your.server.name"
+    "url": "wss://your.server.name" // modify ⚠️
   },
   "codec": "vp9",
   "resolution": "1080p",
@@ -24,12 +26,12 @@ The following is the basic configuration of vocespace. You need to copy this con
   "priority": "medium",
   "redis": { 
     "enabled": true, 
-    "host": "your.ip", 
+    "host": "your.ip", // modify ⚠️
     "port": 6379, 
     "password": "vocespace", 
     "db": 0 
   },
-  "server_url": "your.server.name"
+  "server_url": "your.server.name" // modify ⚠️
 }
 ```
 
@@ -146,10 +148,10 @@ server {
     listen 80;
     listen [::]:80;
 
-    server_name your.server.name;
+    server_name your.server.name; # modify ⚠️
 
     location / {
-        return 301 https://$host$request_uri;
+        return 301 https://$host$request_uri; # modify ⚠️
     }
 
     return 404;
@@ -185,7 +187,7 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
 
-    server_name your.server.name;
+    server_name your.server.name; # modify ⚠️
 
     ssl_certificate /etc/letsencrypt/live/your.server.name/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/your.server.name/privkey.pem;
@@ -269,9 +271,10 @@ Like local deployment, you also need to start livekit-server to support webrtc. 
         port_range_end: 60000
         use_external_ip: true
         enable_loopback_candidate: false
+    # optional
     turn:
         enabled: false
-        domain: turn.vocespace.xyz
+        domain: your.turn.domain
         tls_port: 5349
         udp_port: 3478
         external_tls: true

@@ -96,7 +96,7 @@ docker pull privoce/vocespace:latest_arm
   "livekit": {
     "key": "devkey",
     "secret": "secret",
-    "url": "ws://your.ip:7880"
+    "url": "ws://your.ip:7880" // modify ⚠️
   },
   "codec": "vp9",
   "resolution": "1080p",
@@ -105,9 +105,9 @@ docker pull privoce/vocespace:latest_arm
   "priority": "medium",
   "redis": { 
     "enabled": true, 
-    "host": "your.ip", 
+    "host": "your.ip", // modify ⚠️
     "port": 6379, 
-    "password": "vocespace", 
+    "password": "vocespace",
     "db": 0 
   },
   "server_url": "localhost"
@@ -121,7 +121,7 @@ docker pull privoce/vocespace:latest_arm
 > inet 127.0.0.1 netmask 0xff000000
 > inet 192.168.31.138 netmask 0xffffff00 broadcast 192.168.31.255
 > ```
-> 在这个例子中 `192.168.31.138` 就是你的宿主机IP
+> 在这个例子中 `192.168.31.138` 就是你的宿主机IP，redis部分可直接使用`localhost`
 
 
 ## 4. 启动容器

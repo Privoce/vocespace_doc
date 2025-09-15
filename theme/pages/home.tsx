@@ -2,6 +2,7 @@ import { useI18n, useI18nUrl } from "../i18n";
 import { normalizeImagePath, useNavigate } from "rspress/runtime";
 import Hero from "../components/Home/Hero";
 import { useCallback } from "react";
+import Footer from "../components/Footer";
 
 export function HomeLayout() {
   const t = useI18n();

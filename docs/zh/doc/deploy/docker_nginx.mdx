@@ -4,18 +4,21 @@ import { Tab, Tabs } from "@theme";
 
 通过本指南，你将学会如何使用 Docker 和 Nginx 将应用正式部署至生产环境，并配置 HTTPS 证书保障通信安全。
 
-**[如何获得的key和secret?](./help#如何获取key和secret)**
 
 ## 1. 复制基础配置
 
 以下是vocespace的基础配置，在启动容器前你需要将该配置复制并在启动时指定
+
+默认的 "key": `"devkey"`, "secret": `"secret"` 可以正常工作，但是，如果您想提高安全性和稳定性，可以从托管的 livekit 服务器生成密钥/密钥对。
+
+**[(可选) 如何获得的key和secret?](./help#如何获取key和secret)**
 
 ```json
 {
   "livekit": {
     "key": "devkey",
     "secret": "secret",
-    "url": "wss://your.server.name"
+    "url": "wss://your.server.name" // modify ⚠️
   },
   "codec": "vp9",
   "resolution": "1080p",
@@ -24,12 +27,12 @@ import { Tab, Tabs } from "@theme";
   "priority": "medium",
   "redis": { 
     "enabled": true, 
-    "host": "your.ip", 
+    "host": "your.ip", // modify ⚠️
     "port": 6379, 
     "password": "vocespace", 
     "db": 0 
   },
-  "server_url": "your.server.name"
+  "server_url": "your.server.name" // modify ⚠️
 }
 ```
 
@@ -148,10 +151,10 @@ server {
     listen 80;
     listen [::]:80;
 
-    server_name your.server.name;
+    server_name your.server.name; # modify ⚠️
 
     location / {
-        return 301 https://$host$request_uri;
+        return 301 https://$host$request_uri; # modify ⚠️
     }
 
     return 404;
@@ -187,7 +190,7 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
 
-    server_name your.server.name;
+    server_name your.server.name;  # modify ⚠️
 
     ssl_certificate /etc/letsencrypt/live/your.server.name/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/your.server.name/privkey.pem;
@@ -273,6 +276,7 @@ systemctl restart nginx
         port_range_end: 60000
         use_external_ip: true
         enable_loopback_candidate: false
+    # optional
     turn:
         enabled: false
         domain: turn.vocespace.xyz

@@ -8,18 +8,20 @@ import { Tab, Tabs } from "@theme";
 > 1. Docker + Nginx
 > 2. Docker + Caddy
 
-**[How to get key and secret?](./help#how-to-get-key-and-secret)**
-
 ## 1. Copy Basic Configuration
 
 The following is the basic configuration of vocespace. You need to copy this configuration and specify it when starting the container
+
+The defaul "key": `"devkey"`, "secret": `"secret"` works well, however, if you want to improve security and stability, feel free to generate a key/secret pair from your hosted livekit-server.
+
+**[(Optional) How to get key and secret?](./help#how-to-get-key-and-secret)**
 
 ```json
 {
   "livekit": {
     "key": "devkey",
     "secret": "secret",
-    "url": "ws://your.ip:7880"
+    "url": "ws://your.ip:7880" // modify ⚠️
   },
   "codec": "vp9",
   "resolution": "1080p",
@@ -28,7 +30,7 @@ The following is the basic configuration of vocespace. You need to copy this con
   "priority": "medium",
   "redis": { 
     "enabled": true, 
-    "host": "your.ip", 
+    "host": "your.ip", // modify ⚠️
     "port": 6379, 
     "password": "vocespace", 
     "db": 0 
@@ -44,7 +46,7 @@ The following is the basic configuration of vocespace. You need to copy this con
 > inet 127.0.0.1 netmask 0xff000000
 > inet 192.168.31.138 netmask 0xffffff00 broadcast 192.168.31.255
 > ```
-> In this example `192.168.31.138` is your host machine IP
+> In this example `192.168.31.138` is your host machine IP, redis can directly use `localhost`
 
 ## 2. Install Docker (Docker Engine|Desktop)
 
