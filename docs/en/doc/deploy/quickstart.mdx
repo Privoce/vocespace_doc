@@ -84,25 +84,27 @@ The script supports JSON format configuration files. Default configuration file 
   "livekit": {
     "key": "devkey",
     "secret": "secret",
-    "url": "ws://YOUR_IP:7880"
+    "url": "wss://your.ip:7880"
   },
   "codec": "vp9",
   "resolution": "1080p",
   "maxBitrate": 3000000,
   "maxFramerate": 30,
   "priority": "medium",
-  "redis": {
-    "enabled": true,
-    "host": "YOUR_IP",
-    "port": 6379,
-    "password": "vocespace",
-    "db": 0
+  "redis": { 
+    "enabled": true, 
+    "host": "your.ip",
+    "port": 6379, 
+    "password": "vocespace", 
+    "db": 0 
   },
-  "server_url": "localhost"
+  "serverUrl": "localhost",
+  "hostToken": "vocespace_privoce",
+  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E"
 }
 ```
 
-> **Note**: The script will automatically replace `YOUR_IP` in the configuration file with the actual host IP address.
+> **Note**: The script will automatically replace `your.ip` in the configuration file with the actual host IP address.
 
 ## Deployment Process
 
