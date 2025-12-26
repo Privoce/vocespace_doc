@@ -3,10 +3,12 @@ import { useLang, withBase } from 'rspress/runtime';
 import { useCallback } from 'react';
 import { EN_US } from './en_us';
 import { ZH_CN } from './zh_cn';
+import { RU_RU } from './ru_ru';
 
 const translations = {
     en: EN_US,
     zh: ZH_CN,
+    ru: RU_RU,
 } as const;
 
 
