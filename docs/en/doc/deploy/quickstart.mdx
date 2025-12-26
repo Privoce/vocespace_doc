@@ -8,9 +8,9 @@ Support for one-click deployment of VoceSpace + LiveKit Server + Redis.
 
 ## File Description
 
-- `vocespace_deploy.sh` - Linux/macOS automated deployment script
-- `vocespace_deploy.bat` - Windows automated deployment script
-- `README.md` - Documentation
+- [`vocespace_deploy.sh`](https://vocespace.com/local_deploy/vocespace_deploy.bat) - Linux/macOS automated deployment script
+- [`vocespace_deploy.bat`](https://vocespace.com/local_deploy/vocespace_deploy.bat) - Windows automated deployment script
+- [`README.md`](https://vocespace.com/local_deploy/README.md) - Documentation
 
 ## Features
 
@@ -27,40 +27,40 @@ Support for one-click deployment of VoceSpace + LiveKit Server + Redis.
 
 ```bash
 # Basic usage - use default configuration
-./vocespace_deploy.sh
+sh ./vocespace_deploy.sh
 
 # Use custom configuration file
-./vocespace_deploy.sh --config ./my-config.json
+sh ./vocespace_deploy.sh --config ./my-config.json
 
 # Specify host IP
-./vocespace_deploy.sh --host-ip 192.168.1.100
+sh ./vocespace_deploy.sh --host-ip 192.168.1.100
 
 # Force reinstall all components
-./vocespace_deploy.sh --force
+sh ./vocespace_deploy.sh --force
 
 # Skip certain component installations
-./vocespace_deploy.sh --skip-redis --skip-livekit
+sh ./vocespace_deploy.sh --skip-redis --skip-livekit
 
 # Combined usage
-./vocespace_deploy.sh --config ./config.json --host-ip 192.168.1.100 --force
+sh ./vocespace_deploy.sh --config ./config.json --host-ip 192.168.1.100 --force
 ```
 
 ### Windows
 
 ```cmd
-REM Basic usage - use default configuration
+# REM Basic usage - use default configuration
 vocespace_deploy.bat
 
-REM Use custom configuration file
+# REM Use custom configuration file
 vocespace_deploy.bat --config ./my-config.json
 
-REM Specify host IP
+# REM Specify host IP
 vocespace_deploy.bat --host-ip 192.168.1.100
 
-REM Force reinstall all components
+# REM Force reinstall all components
 vocespace_deploy.bat --force
 
-REM Skip certain component installations
+# REM Skip certain component installations
 vocespace_deploy.bat --skip-redis --skip-livekit
 ```
 
@@ -99,7 +99,7 @@ The script supports JSON format configuration files. Default configuration file 
     "db": 0 
   },
   "serverUrl": "localhost",
-  "hostToken": "vocespace_privoce",
+  "hostToken": "vocespace",
   "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E"
 }
 ```

@@ -1,0 +1,341 @@
+# NAS 私有部署
+
+NAS（Network Attached Storage，网络附加存储）是一台“专管文件”的迷你服务器——它把硬盘直接挂到局域网里，专门提供文件存取、备份、共享、多版本快照、多媒体服务等，不跑通用计算任务。
+
+常用的NAS供应商:
+- Synology(群晖)
+- 联想个人云 / 极空间 / 绿联
+- Western Digital My Cloud
+- ...
+
+**无需域名，私有部署**
+
+## NAS 本地部署视频
+
+视频中演示使用VoceChat内嵌VoceSpace设置获取部署脚本进行部署
+
+**如果您单纯只想部署VoceSpace请下载部署脚本并阅读下方手动部署VoceSpace部分**
+
+<video src="https://vocespace.com/local_deploy/nas.mp4" controls></video>
+
+### 部署脚本下载
+
+点击下载下方的shell脚本
+
+[NAS.sh](https://vocespace/local_deploy/nas.sh)
+
+脚本说明： 
+- 下载所有你所需要的docker image
+- 自动创建容器
+- 不介入代理
+
+## 手动执行脚本部署
+
+你无需进行任何手动更改，直接使用sh进行执行
+
+```bash
+# 登陆到您的服务器
+ssh your.account@your.nas.ip
+
+# 使用root执行
+sudo -i
+
+# 复制脚本到deploy.sh中并保存退出(:wq)
+vim ./deploy.sh
+
+# 赋予执行权限
+chmod 644 ./deploy.sh
+
+# 执行脚本
+sh ./deploy.sh
+```
+
+完成执行后你会在容器中看到这些容器
+
+- redis
+- vocespace
+- livekit-server
+
+![nas_container](/nas/nas_1.png)
+
+**其中vocespace容器可能会启动失败，这是因为`vocespace.conf.json`没有读写权限**
+
+### 为vocespace.conf.json增加读写权限
+
+`vocespace.conf.json`的位置就在您执行脚本所在的位置，如果您查看容器日志，您应该会看到一行输出: `/app/vocespace.conf.json: Permission denied`
+
+```bash
+chmod 644 ./vocespace.conf.json
+```
+
+赋予权限后重新启动vocespace容器即可
+
+## 内网访问
+
+到这一步说明您已经完成了本地安装，所有容器都正常启动了，但现在依然使用http和ws协议，这依旧无法正常通讯。那么接下来让我们继续。
+
+![alt text](/nas/image_1.png)
+
+### 复制新的VoceSpace
+
+右击vocespace选择复制选项复制一个新的vocespace，我们需要修改原本映射的3008端口为3006端口，当然你也可以选择其他端口，只要不被占用且不是3008端口即可。
+
+![alt text](/nas/image_2.png)
+
+![alt text](/nas/image_3.png)
+
+
+### 复制新的livekit-server
+
+同样我们需要复制一个新的livekit-server容器，因为我们需要增加两个参数以确保webrtc服务不会通过外网转发，将下面的两个环境参数添加进去。不要填错你自己的IP！
+
+- LIVEKIT_NODE_IP = your.nas.server.ip
+- LIVEKIT_RTC_USE_EXTERNAL_IP = false
+
+![alt text](/nas/image_5.png)
+
+### 删除之前的容器
+
+完成复制之后你就可以把之前的VoceSpace和livekit-server容器删除了
+
+![alt text](/nas/image_4.png)
+
+## 配置Nginx反向代理
+
+
+### 查询VoceSpace在Docker上的ip
+
+下面的命令可以查询所有容器的IP，找到VoceSpace的IP，记住它
+
+```bash
+# 进入root用户
+sudo -i
+# 查询IP
+docker ps -q | xargs -n 1 docker inspect -f '{{.Name}}: {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+```
+
+![alt text](/nas/image_8.png)
+
+### 设置代理
+
+打开控制面板，选择系统中的登录门户，点击高级，点击反向代理服务器。
+
+![alt text](/nas/image_6.png)
+
+接下来新增一个配置并保存。
+
+- 来源
+    - 协议：HTTPS
+    - 主机名：不需要写
+    - 端口：3008
+- 目的地
+    - 协议：HTTP
+    - 主机名：这是你vocespace在docker上的ip
+    - 端口3000
+
+![alt text](/nas/image_7.png)
+
+### 增加rtc配置
+
+接下来我们需要修改nginx配置增加rtc的配置来让ws协议升级为wss协议。
+
+```
+# 切换到nginx的site-enabled中
+cd /usr/local/etc/nginx/sites-enabled
+# 修改服务器代理配置
+vim server.ReverseProxy.conf
+```
+
+当你打开这个文件时，他应该是这样的
+
+```nginx
+server {
+    listen 3008 ssl default_server;
+    listen [::]:3008 ssl default_server;
+
+    server_name _;
+
+    include /usr/syno/etc/www/certificate/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4/cert.conf*;
+
+    include /usr/syno/etc/security-profile/tls-profile/config/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4.conf*;
+
+    proxy_ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+
+    location / {
+
+        proxy_connect_timeout 60;
+
+        proxy_read_timeout 60;
+
+        proxy_send_timeout 60;
+
+        proxy_intercept_errors off;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header        Upgrade            $http_upgrade;
+
+        proxy_set_header        Connection            $connection_upgrade;
+
+        proxy_set_header        Host            $http_host;
+
+        proxy_set_header        X-Real-IP            $remote_addr;
+
+        proxy_set_header        X-Forwarded-For            $proxy_add_x_forwarded_for;
+
+        proxy_set_header        X-Forwarded-Proto            $scheme;
+
+        proxy_pass http://172.17.0.2:3000;
+
+    }
+
+    error_page 403 404 500 502 503 504 /dsm_error_page;
+
+    location /dsm_error_page {
+        internal;
+        root /usr/syno/share/nginx;
+        rewrite (.*) /error.html break;
+        allow all;
+    }
+
+}
+```
+
+接下来在`location / {` 的上一行，增加下面的配置
+
+```nginx
+location /rtc {
+
+    proxy_pass http://127.0.0.1:7880;
+
+    proxy_http_version 1.1;
+
+    proxy_set_header Upgrade $http_upgrade;
+
+    proxy_set_header Connection "Upgrade";
+
+    proxy_set_header Host $host;
+
+}
+```
+
+
+完成后按`ESC`，输入`:wq`进行报错退出
+
+完整的配置文件如下：
+
+```nginx
+server {
+    listen 3008 ssl default_server;
+    listen [::]:3008 ssl default_server;
+
+    server_name _;
+
+    include /usr/syno/etc/www/certificate/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4/cert.conf*;
+
+    include /usr/syno/etc/security-profile/tls-profile/config/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4.conf*;
+
+    proxy_ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+
+    location /rtc {
+
+        proxy_pass http://127.0.0.1:7880;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Upgrade $http_upgrade;
+
+        proxy_set_header Connection "Upgrade";
+
+        proxy_set_header Host $host;
+
+    }
+
+        location / {
+
+        proxy_connect_timeout 60;
+
+        proxy_read_timeout 60;
+
+        proxy_send_timeout 60;
+
+        proxy_intercept_errors off;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header        Upgrade            $http_upgrade;
+
+        proxy_set_header        Connection            $connection_upgrade;
+
+        proxy_set_header        Host            $http_host;
+
+        proxy_set_header        X-Real-IP            $remote_addr;
+
+        proxy_set_header        X-Forwarded-For            $proxy_add_x_forwarded_for;
+
+        proxy_set_header        X-Forwarded-Proto            $scheme;
+
+        proxy_pass http://172.17.0.2:3000;
+
+    }
+
+    error_page 403 404 500 502 503 504 /dsm_error_page;
+
+    location /dsm_error_page {
+        internal;
+        root /usr/syno/share/nginx;
+        rewrite (.*) /error.html break;
+        allow all;
+    }
+
+}
+```
+
+### 重新加载nginx
+
+```bash
+systemctl reload nginx
+```
+
+### 确保VoceSpace配置文件并重启VoceSpace容器
+
+接下来我们只需要确保VoceSpace的配置文件正确并重启VoceSpace容器即可
+
+```bash
+vim /volume1/share/data/vocespace.conf.json
+```
+
+配置文件中你因该注意
+
+1. livekit中的url需要: `wss://your.server.ip:3008`，是3008，不是7880
+2. redis中的host需要: `your.server.ip`
+
+例如：
+```json
+{
+    "livekit": {
+        "key": "APIQLeUrXGujRQk",
+        "secret": "fWHUA2CQlfi1iG4L3YqWKIhXuF9aqvlO5uTWAuHoLKm",
+        "url": "wss://192.168.31.249:3008"
+    },
+    "codec": "vp9",
+    "resolution": "1080p",
+    "maxBitrate": 3000000,
+    "maxFramerate": 30,
+    "priority": "medium",
+    "redis": {
+        "enabled": true,
+        "host": "192.168.31.249",
+        "port": 6379,
+        "password": "vocespace",
+        "db": 0
+    },
+    "server_url": "192.168.31.249",
+    "host_token": "vocespace",
+    "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjE3NzkyNzg0MDAsImNyZWF0ZWRfYXQiOjE3NDc3NDI0MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJwcm8iLCJpZCI6IjZkZjgyMTMyLTIyODQtNGY2MS1iYmZhLWZkZmU4YmMzMWE2NyJ9.PiagYRDWSpzhIdbnY-pp8QeOf5Ij7neV8RMEafDgVT4"
+}
+```
+
+确定配置没有任何问题之后，重启VoceSpace容器并进行登录，如果你看到如下画面，那么恭喜你成功完成内网访问
+
+![alt text](/nas/image_9.png)

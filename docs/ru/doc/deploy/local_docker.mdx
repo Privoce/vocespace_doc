@@ -1,32 +1,32 @@
 import { Tab, Tabs } from "@theme";
 
-# 本地 Docker 部署
+# Локальное развертывание Docker
 
 > [!WARNING]
-> 须知: 本地部署可以体验VoceSpace的所有功能，但无法在公开网络中进行访问，若您需要公网部署请参考:
+> Обратите внимание: Локальное развертывание позволяет испытать все функции VoceSpace, но недоступно в публичной сети. Если вам нужно публичное развертывание, обратитесь к:
 > 1. Docker + Nginx
 > 2. Docker + Caddy
 
-## 1. 安装 Docker(Docker Engine|Desktop)
+## 1. Установка Docker (Docker Engine|Desktop)
 
 > [!INFO]
 >
-> 有关具体的 Docker 安装，或安装时出现问题请参看：
+> Для получения подробной информации об установке Docker или при возникновении проблем обратитесь к:
 >
 > 1. [Docker Engine Install](https://docs.docker.com/engine/install)
 > 2. [Docker Desktop Install](https://docs.docker.com/desktop/)
 >
-> **如果您是新生并对命令行感到陌生，我们推荐您安装 Docker Desktop。**
+> **Если вы новичок и не знакомы с командной строкой, мы рекомендуем установить Docker Desktop.**
 >
-> **在下面的安装中，如果您使用的是 Macos 系统或 Windows 系统我们将引导您安装 Docker Desktop。**
+> **В приведенной ниже установке, если вы используете macOS или Windows, мы проведем вас через установку Docker Desktop.**
 
 <Tabs>
     <Tab label="Macos" style={{padding: "16px"}}>
         <p>
-            [Macos-M系列芯片](https://desktop.docker.com/mac/main/arm64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=dd-smartbutton&utm_location=module&_gl=1*ka9maz*_gcl_au*NTM4NzM2Njg3LjE3NDcxMzAyMTA.*_ga*MTk1NDA1MTg1NS4xNzMzMzA0NDc0*_ga_XJWPQMJYHQ*czE3NDcxMzAyMTAkbzUkZzEkdDE3NDcxMzA5NDgkajQzJGwwJGgw)
+            [Macos-M серия чипов](https://desktop.docker.com/mac/main/arm64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=dd-smartbutton&utm_location=module&_gl=1*ka9maz*_gcl_au*NTM4NzM2Njg3LjE3NDcxMzAyMTA.*_ga*MTk1NDA1MTg1NS4xNzMzMzA0NDc0*_ga_XJWPQMJYHQ*czE3NDcxMzAyMTAkbzUkZzEkdDE3NDcxMzA5NDgkajQzJGwwJGgw)
         </p>
         <p>
-            [Macos-Intel系列芯片](https://desktop.docker.com/mac/main/amd64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=dd-smartbutton&utm_location=module&_gl=1*f8qjhp*_gcl_au*NTM4NzM2Njg3LjE3NDcxMzAyMTA.*_ga*MTk1NDA1MTg1NS4xNzMzMzA0NDc0*_ga_XJWPQMJYHQ*czE3NDcxMzAyMTAkbzUkZzEkdDE3NDcxMzEwNzEkajYwJGwwJGgw)
+            [Macos-Intel серия чипов](https://desktop.docker.com/mac/main/amd64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=dd-smartbutton&utm_location=module&_gl=1*f8qjhp*_gcl_au*NTM4NzM2Njg3LjE3NDcxMzAyMTA.*_ga*MTk1NDA1MTg1NS4xNzMzMzA0NDc0*_ga_XJWPQMJYHQ*czE3NDcxMzAyMTAkbzUkZzEkdDE3NDcxMzEwNzEkajYwJGwwJGgw)
         </p>
     </Tab>
     <Tab label="Windows" style={{padding: "16px"}}>
@@ -38,7 +38,7 @@ import { Tab, Tabs } from "@theme";
        </p>
     </Tab>
     <Tab label="Linux(Ubuntu)" style={{padding: "0 16px"}}>
-### 彻底卸载旧版本，并移除资源
+### Полное удаление старой версии и ресурсов
  ```bash
 sudo apt-get purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
 sudo rm -rf /var/lib/docker
@@ -46,7 +46,7 @@ sudo rm -rf /var/lib/containerd
 sudo rm /etc/apt/sources.list.d/docker.list
 sudo rm /etc/apt/keyrings/docker.asc
 ```
-### 更新并初始化Docker apt仓库
+### Обновление и инициализация репозитория Docker apt
 ```bash
 sudo apt-get update
 sudo apt-get install ca-certificates curl
@@ -54,7 +54,7 @@ sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 ```
-### 添加仓库到apt源
+### Добавление репозитория в источники apt
 ```bash
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
@@ -62,23 +62,23 @@ echo \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 ```
-### 安装最新版本Docker
+### Установка последней версии Docker
 ```bash
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-# 验证安装
+# Проверьте установку
 sudo docker run hello-world
 ```
     </Tab>
 
 </Tabs>
 
-## 2. 获取 VoceSpace 镜像
+## 2. Получение образа VoceSpace
 
-VoceSpace含有两种镜像:
+VoceSpace имеет два типа образов:
 - amd: `privoce/vocespace:latest`
 - arm: `privoce/vocespace:latest_arm`
 
-所以您需要知道自己当前的服务器架构进行选择, 见: [help-查看自己的linux架构](/zh/doc/deploy/help#查看自己的linux架构)
+Поэтому вам нужно знать архитектуру вашего сервера для выбора, см.: [help-просмотр архитектуры linux](/zh/doc/deploy/help#查看自己的linux架构)
 
 ```shell
 # amd
@@ -87,9 +87,9 @@ docker pull privoce/vocespace:latest
 docker pull privoce/vocespace:latest_arm
 ```
 
-## 3. 复制基础配置
+## 3. Копирование базовой конфигурации
 
-以下是vocespace的基础配置，在启动容器前你需要将该配置复制并在启动时指定
+Ниже приведена базовая конфигурация VoceSpace. Перед запуском контейнера вам нужно скопировать эту конфигурацию и указать её при запуске
 
 ```json
 {
@@ -118,15 +118,15 @@ docker pull privoce/vocespace:latest_arm
 
 > [!WARNING]
 >
-> your.ip: 用户宿主机的IP地址，可以使用`ifconfig | grep inet`进行查看
+> your.ip: IP-адрес хост-машины пользователя, можно просмотреть с помощью `ifconfig | grep inet`
 > ```bash
 > inet 127.0.0.1 netmask 0xff000000
 > inet 192.168.31.138 netmask 0xffffff00 broadcast 192.168.31.255
 > ```
-> 在这个例子中 `192.168.31.138` 就是你的宿主机IP，redis部分可直接使用`localhost`
+> В этом примере `192.168.31.138` — это IP вашего хоста, для redis можно использовать `localhost`
 
 
-## 4. 启动容器
+## 4. Запуск контейнера
 
 ```shell
 docker run -d \
@@ -138,18 +138,18 @@ privoce/vocespace:latest
 
 > [!NOTE]
 >
-> ⚠️`-v ${PWD}/vocespace.json:/app/vocespace.conf.json`: 将配置进行映射
+> ⚠️`-v ${PWD}/vocespace.json:/app/vocespace.conf.json`: Монтирование конфигурации
 
 
-### 输出
+### Вывод
 
-1. Docker ce: 如果在Linux上，您可以使用`docker ps`查看进程，然后浏览器访问`your_ip:3000`查看启动的应用, 然后使用 `docker logs <container_id>` 查看日志
-2. Docker desktop: 容器启动后观察输出, 当输出`Ready on http://ip:3000`时，表示本地部署已经完成
+1. Docker CE: Если вы используете Linux, можете использовать `docker ps` для просмотра процессов, затем в браузере перейти к `your_ip:3000` для просмотра запущенного приложения, затем использовать `docker logs <container_id>` для просмотра логов
+2. Docker Desktop: После запуска контейнера наблюдайте за выводом. Когда появится `Ready on http://ip:3000`, это означает, что локальное развертывание завершено
 
 
 ```bash
-2025-05-29 02:44:09 ✅ Socket.IO 安装完成
-2025-05-29 02:44:15 环境变量配置:
+2025-05-29 02:44:09 ✅ Socket.IO установка завершена
+2025-05-29 02:44:15 Конфигурация переменных окружения:
 2025-05-29 02:44:15 LIVEKIT_API_KEY=devkey
 2025-05-29 02:44:15 LIVEKIT_API_SECRET=secret
 2025-05-29 02:44:15 LIVEKIT_URL=ws://localhost:7880
@@ -164,11 +164,11 @@ privoce/vocespace:latest
 2025-05-29 02:44:16 > Ready on http://0.0.0.0:3000
 ```
 
-## 4. 启动 livekit-server
+## 4. Запуск livekit-server
 
-VoceSpace需要依赖livekit-server构建起webrtc以及其他相关服务
+VoceSpace требует livekit-server для сборки WebRTC и других связанных сервисов.
 
-### 下载 livekit-server
+### Скачать livekit-server
 <Tabs>
     <Tab label="Macos">
     ```bash
@@ -176,7 +176,7 @@ VoceSpace需要依赖livekit-server构建起webrtc以及其他相关服务
     ```
     </Tab>
     <Tab label="Windows" style={{padding: "6px"}}>
-        请移步[livekit github](https://github.com/livekit/livekit/releases)
+        Перейдите на [livekit github](https://github.com/livekit/livekit/releases)
     </Tab>
     <Tab label="Linux">
     ```bash
@@ -185,13 +185,13 @@ VoceSpace需要依赖livekit-server构建起webrtc以及其他相关服务
     </Tab>
 </Tabs>
 
-### 启动 livekit-server
+### Запуск livekit-server
 
 ```
 livekit-server --dev --bind 0.0.0.0
 ```
 
-## 5. 下载并启动redis
+## 5. Загрузка и запуск Redis
 
 <Tabs>
     <Tab label="Macos">
@@ -201,7 +201,7 @@ livekit-server --dev --bind 0.0.0.0
     ```
     </Tab>
     <Tab label="Windows" style={{padding: "6px"}}>
-        点击下载[Redis-Windows](https://github.com/tporadowski/redis/releases/download/v5.0.14.1/Redis-x64-5.0.14.1.msi)
+        Скачать [Redis-Windows](https://github.com/tporadowski/redis/releases/download/v5.0.14.1/Redis-x64-5.0.14.1.msi)
         ```bash
         redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no --daemonize yes
         ```
@@ -215,11 +215,11 @@ livekit-server --dev --bind 0.0.0.0
     </Tab>
 </Tabs>
 
-## 云服务器说明
+## Примечания для облачных серверов
 
-### 配置安全组/防火墙
+### Настройка группы безопасности/брандмауэра
 
-在使用云服务器时，例如：阿里云，腾讯云，Google Cloud等，您需要对服务器等安全组/防火墙进行相关配置
+При использовании облачных серверов, таких как Alibaba Cloud, Tencent Cloud, Google Cloud и т.д., вам необходимо настроить группу безопасности/брандмауэр сервера
 
 | port | type | ingress/egress | allow ip |
 |--|--|--|--|

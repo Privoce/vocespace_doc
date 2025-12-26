@@ -8,9 +8,9 @@ import { Tab, Tabs } from "@theme";
 
 ## 文件说明
 
-- `vocespace_deploy.sh` - Linux/macOS 自动化部署脚本
-- `vocespace_deploy.bat` - Windows 自动化部署脚本
-- `README.md` - 本说明文档
+- [`vocespace_deploy_zh.sh`](https://vocespace.com/local_deploy/vocespace_deploy_zh.sh) - Linux/macOS 自动化部署脚本
+- [`vocespace_deploy_zh.bat`](https://vocespace.com/local_deploy/vocespace_deploy_zh.bat) - Windows 自动化部署脚本
+- [`README.md`](https://vocespace.com/local_deploy/README.md) - 本说明文档
 
 ## 功能特性
 
@@ -27,41 +27,41 @@ import { Tab, Tabs } from "@theme";
 
 ```bash
 # 基本使用 - 使用默认配置
-./vocespace_deploy.sh
+sh ./vocespace_deploy_zh.sh
 
 # 使用自定义配置文件
-./vocespace_deploy.sh --config ./my-config.json
+sh ./vocespace_deploy_zh.sh --config ./my-config.json
 
 # 指定宿主机IP
-./vocespace_deploy.sh --host-ip 192.168.1.100
+sh ./vocespace_deploy_zh.sh --host-ip 192.168.1.100
 
 # 强制重新安装所有组件
-./vocespace_deploy.sh --force
+sh ./vocespace_deploy_zh.sh --force
 
 # 跳过某些组件的安装
-./vocespace_deploy.sh --skip-redis --skip-livekit
+sh ./vocespace_deploy_zh.sh --skip-redis --skip-livekit
 
 # 组合使用
-./vocespace_deploy.sh --config ./config.json --host-ip 192.168.1.100 --force
+sh ./vocespace_deploy_zh.sh --config ./config.json --host-ip 192.168.1.100 --force
 ```
 
 ### Windows
 
 ```cmd
-REM 基本使用 - 使用默认配置
-vocespace_deploy.bat
+# REM 基本使用 - 使用默认配置
+vocespace_deploy_zh.bat
 
-REM 使用自定义配置文件
-vocespace_deploy.bat --config ./my-config.json
+# REM 使用自定义配置文件
+vocespace_deploy_zh.bat --config ./my-config.json
 
-REM 指定宿主机IP
-vocespace_deploy.bat --host-ip 192.168.1.100
+# REM 指定宿主机IP
+vocespace_deploy_zh.bat --host-ip 192.168.1.100
 
-REM 强制重新安装所有组件
-vocespace_deploy.bat --force
+# REM 强制重新安装所有组件
+vocespace_deploy_zh.bat --force
 
-REM 跳过某些组件的安装
-vocespace_deploy.bat --skip-redis --skip-livekit
+# REM 跳过某些组件的安装
+vocespace_deploy_zh.bat --skip-redis --skip-livekit
 ```
 
 ## 命令行参数
@@ -99,7 +99,7 @@ vocespace_deploy.bat --skip-redis --skip-livekit
     "db": 0 
   },
   "serverUrl": "localhost",
-  "hostToken": "vocespace_privoce",
+  "hostToken": "vocespace",
   "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E"
 }
 ```

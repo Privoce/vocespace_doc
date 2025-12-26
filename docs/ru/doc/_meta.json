@@ -1,0 +1,17 @@
+[
+    {
+        "type": "dir",
+        "name": "guide",
+        "label": "Руководство"
+    },
+    {
+        "type": "dir",
+        "name": "deploy",
+        "label": "Развертывание"
+    },
+    {
+        "type": "dir",
+        "name": "log",
+        "label": "Журнал"
+    }
+]

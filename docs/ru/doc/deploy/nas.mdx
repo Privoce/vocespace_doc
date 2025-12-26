@@ -1,0 +1,342 @@
+# NAS Частное развертывание
+
+NAS (Network Attached Storage) — это мини-сервер, предназначенный для управления файлами. Он напрямую подключает жесткие диски к локальной сети (LAN) и обеспечивает доступ к файлам, резервное копирование, совместное использование, создание снимков нескольких версий, мультимедийные сервисы и т. д., без выполнения обычных вычислительных задач.
+
+Распространенные производители NAS:
+
+- Synology
+- Lenovo Personal Cloud / Extreme Space / UGREEN
+- Western Digital My Cloud
+- ...
+
+**Доменное имя не требуется, частное развертывание**
+
+## Видео по локальному развертыванию на NAS
+
+В видео демонстрируется использование встроенной программы настройки VoceSpace в VoceChat для получения скрипта развертывания.
+
+**Если вы хотите развернуть только VoceSpace, пожалуйста, загрузите скрипт развертывания и ознакомьтесь с разделом о ручном развертывании VoceSpace ниже.**
+
+<video src="https://vocespace.com/local_deploy/nas.mp4" controls></video>
+
+### Загрузка скрипта развертывания
+
+Нажмите ниже, чтобы загрузить скрипт оболочки.
+
+[NAS.sh](https://vocespace/local_deploy/nas.sh)
+
+Описание скрипта： 
+- Загружает все необходимые образы Docker
+- Автоматически создает контейнеры
+- Не использует прокси
+
+## Ручное выполнение развертывания скрипта
+
+Вам не нужно вносить никаких изменений вручную, просто выполните с помощью sh
+
+```bash
+# Войдите на ваш сервер
+ssh your.account@your.nas.ip
+
+# Выполните от имени root
+sudo -i
+
+# Скопируйте скрипт в deploy.sh и сохраните с выходом (:wq)
+vim ./deploy.sh
+
+# Предоставьте права на выполнение
+chmod 644 ./deploy.sh
+
+# Выполните скрипт
+sh ./deploy.sh
+```
+
+После завершения выполнения вы увидите эти контейнеры
+
+- redis
+- vocespace
+- livekit-server
+
+![nas_container](/nas/nas_1.png)
+
+**Контейнер VoceSpace может не запуститься из-за отсутствия прав на чтение/запись для `vocespace.conf.json`**
+
+### Добавление прав на чтение/запись для vocespace.conf.json
+
+`vocespace.conf.json` находится в том же месте, где вы выполняли скрипт. Если вы посмотрите логи контейнера, вы должны увидеть строку: `/app/vocespace.conf.json: Permission denied`
+
+```bash
+chmod 644 ./vocespace.conf.json
+```
+
+После предоставления прав перезапустите контейнер VoceSpace
+
+## Доступ к локальной сети
+
+Если вы дошли до этого шага, это означает, что вы завершили локальную установку, все контейнеры запущены нормально, но все еще используются протоколы http и ws, что не позволяет нормально общаться. Давайте продолжим.
+
+![alt text](/nas/image_1.png)
+
+### Копирование нового VoceSpace
+
+Щелкните правой кнопкой мыши на vocespace, выберите опцию копирования для создания нового vocespace. Нам нужно изменить исходный порт 3008 на 3006. Конечно, вы можете выбрать другой порт, главное, чтобы он не был занят и не был портом 3008.
+
+![alt text](/nas/image_2.png)
+
+![alt text](/nas/image_3.png)
+
+
+### Копирование нового livekit-server
+
+Также нам нужно скопировать новый контейнер livekit-server, потому что нам нужно добавить два параметра, чтобы обеспечить, что сервис WebRTC не будет проходить через внешнюю сеть. Добавьте следующие две переменные окружения. Не вводите неправильный IP!
+
+- LIVEKIT_NODE_IP = your.nas.server.ip
+- LIVEKIT_RTC_USE_EXTERNAL_IP = false
+
+![alt text](/nas/image_5.png)
+
+### Удаление предыдущих контейнеров
+
+После завершения копирования вы можете удалить предыдущие контейнеры VoceSpace и livekit-server
+
+![alt text](/nas/image_4.png)
+
+## Настройка обратного прокси Nginx
+
+
+### Запрос IP-адреса VoceSpace в Docker
+
+Следующая команда может запросить IP всех контейнеров, найдите IP VoceSpace и запомните его
+
+```bash
+# Войдите как root
+sudo -i
+# Запрос IP
+docker ps -q | xargs -n 1 docker inspect -f '{{.Name}}: {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+```
+
+![alt text](/nas/image_8.png)
+
+### Настройка прокси
+
+Откройте панель управления, выберите портал входа в систему, нажмите «Дополнительно», нажмите «Обратный прокси-сервер».
+
+![alt text](/nas/image_6.png)
+
+Далее добавьте новую конфигурацию и сохраните.
+
+- Источник
+    - Протокол: HTTPS
+    - Имя хоста: не нужно указывать
+    - Порт: 3008
+- Назначение
+    - Протокол: HTTP
+    - Имя хоста: это IP вашего vocespace в docker
+    - Порт 3000
+
+![alt text](/nas/image_7.png)
+
+### Добавление конфигурации RTC
+
+Далее нам нужно изменить конфигурацию nginx, добавив конфигурацию RTC, чтобы обновить протокол ws до wss.
+
+```
+# Перейдите в site-enabled nginx
+cd /usr/local/etc/nginx/sites-enabled
+# Измените конфигурацию обратного прокси сервера
+vim server.ReverseProxy.conf
+```
+
+Когда вы откроете этот файл, он должен выглядеть так
+
+```nginx
+server {
+    listen 3008 ssl default_server;
+    listen [::]:3008 ssl default_server;
+
+    server_name _;
+
+    include /usr/syno/etc/www/certificate/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4/cert.conf*;
+
+    include /usr/syno/etc/security-profile/tls-profile/config/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4.conf*;
+
+    proxy_ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+
+    location / {
+
+        proxy_connect_timeout 60;
+
+        proxy_read_timeout 60;
+
+        proxy_send_timeout 60;
+
+        proxy_intercept_errors off;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header        Upgrade            $http_upgrade;
+
+        proxy_set_header        Connection            $connection_upgrade;
+
+        proxy_set_header        Host            $http_host;
+
+        proxy_set_header        X-Real-IP            $remote_addr;
+
+        proxy_set_header        X-Forwarded-For            $proxy_add_x_forwarded_for;
+
+        proxy_set_header        X-Forwarded-Proto            $scheme;
+
+        proxy_pass http://172.17.0.2:3000;
+
+    }
+
+    error_page 403 404 500 502 503 504 /dsm_error_page;
+
+    location /dsm_error_page {
+        internal;
+        root /usr/syno/share/nginx;
+        rewrite (.*) /error.html break;
+        allow all;
+    }
+
+}
+```
+
+Далее добавьте следующую конфигурацию в строке перед `location / {`
+
+```nginx
+location /rtc {
+
+    proxy_pass http://127.0.0.1:7880;
+
+    proxy_http_version 1.1;
+
+    proxy_set_header Upgrade $http_upgrade;
+
+    proxy_set_header Connection "Upgrade";
+
+    proxy_set_header Host $host;
+
+}
+```
+
+
+После завершения нажмите `ESC`, введите `:wq` для сохранения и выхода
+
+Полный файл конфигурации выглядит следующим образом:
+
+```nginx
+server {
+    listen 3008 ssl default_server;
+    listen [::]:3008 ssl default_server;
+
+    server_name _;
+
+    include /usr/syno/etc/www/certificate/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4/cert.conf*;
+
+    include /usr/syno/etc/security-profile/tls-profile/config/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4.conf*;
+
+    proxy_ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+
+    location /rtc {
+
+        proxy_pass http://127.0.0.1:7880;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Upgrade $http_upgrade;
+
+        proxy_set_header Connection "Upgrade";
+
+        proxy_set_header Host $host;
+
+    }
+
+        location / {
+
+        proxy_connect_timeout 60;
+
+        proxy_read_timeout 60;
+
+        proxy_send_timeout 60;
+
+        proxy_intercept_errors off;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header        Upgrade            $http_upgrade;
+
+        proxy_set_header        Connection            $connection_upgrade;
+
+        proxy_set_header        Host            $http_host;
+
+        proxy_set_header        X-Real-IP            $remote_addr;
+
+        proxy_set_header        X-Forwarded-For            $proxy_add_x_forwarded_for;
+
+        proxy_set_header        X-Forwarded-Proto            $scheme;
+
+        proxy_pass http://172.17.0.2:3000;
+
+    }
+
+    error_page 403 404 500 502 503 504 /dsm_error_page;
+
+    location /dsm_error_page {
+        internal;
+        root /usr/syno/share/nginx;
+        rewrite (.*) /error.html break;
+        allow all;
+    }
+
+}
+```
+
+### Перезагрузка nginx
+
+```bash
+systemctl reload nginx
+```
+
+### Проверка файла конфигурации VoceSpace и перезапуск контейнера VoceSpace
+
+Далее нам просто нужно убедиться, что файл конфигурации VoceSpace правильный, и перезапустить контейнер VoceSpace
+
+```bash
+vim /volume1/share/data/vocespace.conf.json
+```
+
+В файле конфигурации обратите внимание:
+
+1. URL в livekit должен быть: `wss://your.server.ip:3008`, это 3008, а не 7880
+2. Host в redis должен быть: `your.server.ip`
+
+Например：
+```json
+{
+    "livekit": {
+        "key": "APIQLeUrXGujRQk",
+        "secret": "fWHUA2CQlfi1iG4L3YqWKIhXuF9aqvlO5uTWAuHoLKm",
+        "url": "wss://192.168.31.249:3008"
+    },
+    "codec": "vp9",
+    "resolution": "1080p",
+    "maxBitrate": 3000000,
+    "maxFramerate": 30,
+    "priority": "medium",
+    "redis": {
+        "enabled": true,
+        "host": "192.168.31.249",
+        "port": 6379,
+        "password": "vocespace",
+        "db": 0
+    },
+    "server_url": "192.168.31.249",
+    "host_token": "vocespace",
+    "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjE3NzkyNzg0MDAsImNyZWF0ZWRfYXQiOjE3NDc3NDI0MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJwcm8iLCJpZCI6IjZkZjgyMTMyLTIyODQtNGY2MS1iYmZhLWZkZmU4YmMzMWE2NyJ9.PiagYRDWSpzhIdbnY-pp8QeOf5Ij7neV8RMEafDgVT4"
+}
+```
+
+После того как вы убедитесь, что в конфигурации нет проблем, перезапустите контейнер VoceSpace и войдите в систему. Если вы видите следующий экран, поздравляем, вы успешно завершили настройку доступа к локальной сети
+
+![alt text](/nas/image_9.png)

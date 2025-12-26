@@ -29,6 +29,13 @@ export default defineConfig({
         description: "VoceSpace 的文档",
         outlineTitle: "目录",
       },
+      {
+        lang: "ru",
+        label: "Русский",
+        title: "VoceSpace",
+        description: "Документация VoceSpace",
+        outlineTitle: "Содержание",
+      },
     ],
     socialLinks: [
       {

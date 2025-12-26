@@ -1,0 +1,206 @@
+import { Tab, Tabs } from "@theme";
+
+# Быстрый старт VoceSpace
+
+Данный документ описывает, как использовать предоставленные автоматизированные скрипты для развертывания VoceSpace.
+
+Поддерживает развертывание VoceSpace + LiveKit Server + Redis одной командой.
+
+## Описание файлов
+
+- [`vocespace_deploy.sh`](https://vocespace.com/local_deploy/vocespace_deploy.sh) - Скрипт автоматического развертывания для Linux/macOS
+- [`vocespace_deploy.bat`](https://vocespace.com/local_deploy/vocespace_deploy.bat) - Скрипт автоматического развертывания для Windows
+- [`README.md`](https://vocespace.com/local_deploy/README.md) - Данная документация
+
+## Возможности
+
+- ✅ Автоматическое определение системной архитектуры и IP-адреса хоста
+- ✅ Поддержка пользовательских файлов конфигурации
+- ✅ Установка и запуск всех необходимых компонентов одной командой
+- ✅ Интеллектуальная обработка существующих сервисов
+- ✅ Подробная проверка состояния и вывод логов
+- ✅ Поддержка принудительной переустановки и пропуска компонентов
+
+## Использование
+
+### Linux/macOS
+
+```bash
+# Базовое использование - с конфигурацией по умолчанию
+sh ./vocespace_deploy.sh
+
+# Использование пользовательского файла конфигурации
+sh ./vocespace_deploy.sh --config ./my-config.json
+
+# Указание IP-адреса хоста
+sh ./vocespace_deploy.sh --host-ip 192.168.1.100
+
+# Принудительная переустановка всех компонентов
+sh ./vocespace_deploy.sh --force
+
+# Пропуск установки некоторых компонентов
+sh ./vocespace_deploy.sh --skip-redis --skip-livekit
+
+# Комбинированное использование
+sh ./vocespace_deploy.sh --config ./config.json --host-ip 192.168.1.100 --force
+```
+
+### Windows
+
+```cmd
+# REM Базовое использование - с конфигурацией по умолчанию
+vocespace_deploy.bat
+
+# REM Использование пользовательского файла конфигурации
+vocespace_deploy.bat --config ./my-config.json
+
+# REM Указание IP-адреса хоста
+vocespace_deploy.bat --host-ip 192.168.1.100
+
+# REM Принудительная переустановка всех компонентов
+vocespace_deploy.bat --force
+
+# REM Пропуск установки некоторых компонентов
+vocespace_deploy.bat --skip-redis --skip-livekit
+```
+
+## Параметры командной строки
+
+| Параметр | Описание | Пример |
+|----------|----------|--------|
+| `--config FILE` | Указать путь к файлу конфигурации | `--config ./vocespace.conf.json` |
+| `--host-ip IP` | Указать IP-адрес хоста | `--host-ip 192.168.1.100` |
+| `--force` | Принудительная переустановка всех компонентов | `--force` |
+| `--skip-redis` | Пропустить установку Redis | `--skip-redis` |
+| `--skip-livekit` | Пропустить установку LiveKit Server | `--skip-livekit` |
+| `-h, --help` | Показать справочную информацию | `--help` |
+
+## Формат файла конфигурации
+
+Скрипт поддерживает файлы конфигурации в формате JSON. Пример конфигурации по умолчанию:
+
+```json
+{
+  "livekit": {
+    "key": "devkey",
+    "secret": "secret",
+    "url": "wss://your.ip:7880"
+  },
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "medium",
+  "redis": { 
+    "enabled": true, 
+    "host": "your.ip",
+    "port": 6379, 
+    "password": "vocespace", 
+    "db": 0 
+  },
+  "serverUrl": "localhost",
+  "hostToken": "vocespace",
+  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E"
+}
+```
+
+> **Примечание**: Скрипт автоматически заменит `your.ip` в файле конфигурации на фактический IP-адрес хоста.
+
+## Процесс развертывания
+
+Скрипт выполняет развертывание в следующем порядке:
+
+1. **Проверка окружения**
+   - Определение операционной системы и архитектуры
+   - Проверка установки и статуса работы Docker
+   - Автоматическое определение или проверка IP-адреса хоста
+
+2. **Обработка конфигурации**
+   - Проверка наличия и формата файла конфигурации
+   - Автоматическое создание конфигурации по умолчанию (если не указана)
+   - Обновление IP-адреса в конфигурации
+
+3. **Установка компонентов**
+   - Установка Redis (можно пропустить)
+   - Установка LiveKit Server (можно пропустить)
+
+4. **Образы и сервисы**
+   - Загрузка Docker-образа VoceSpace для соответствующей архитектуры
+   - Запуск сервиса Redis
+   - Запуск LiveKit Server
+   - Запуск контейнера VoceSpace
+
+5. **Проверка состояния**
+   - Проверка статуса работы всех сервисов
+   - Отображение адресов доступа и команд управления
+
+## Порты сервисов
+
+После завершения развертывания будут использоваться следующие порты:
+
+| Сервис | Порт | Описание |
+|--------|------|----------|
+| VoceSpace | 3000 | Порт доступа к основному приложению |
+| LiveKit Server | 7880 | Сервис сигнализации WebRTC |
+| LiveKit Server | 7881 | Передача данных WebRTC |
+| Redis | 6379 | Кэш и хранилище сессий |
+
+## Устранение неполадок
+
+### Распространенные проблемы
+
+1. **Docker не запущен**
+   ```
+   ❌ Docker не запущен, пожалуйста, запустите сервис Docker
+   ```
+   - Linux: `sudo systemctl start docker`
+   - macOS/Windows: Запустите Docker Desktop
+
+2. **Конфликт портов**
+   ```
+   Error response from daemon: port is already allocated
+   ```
+   - Проверьте занятость порта: `lsof -i :3000`
+   - Остановите конфликтующий сервис или используйте параметр `--force`
+
+3. **Ошибка формата файла конфигурации**
+   ```
+   ❌ Ошибка формата JSON в файле конфигурации
+   ```
+   - Используйте инструмент проверки JSON для проверки формата
+   - Убедитесь в отсутствии лишних запятых или кавычек
+
+4. **Ошибка определения IP-адреса**
+   ```
+   ❌ Не удалось определить IP-адрес хоста
+   ```
+   - Укажите IP вручную: `--host-ip YOUR_IP`
+   - Проверьте состояние сетевого подключения
+
+### Просмотр логов
+
+- **Логи контейнера VoceSpace**: `docker logs vocespace`
+- **Логи LiveKit Server**: `tail -f livekit-server.log`
+- **Логи Redis**: `tail -f redis.log`
+
+### Управление сервисами
+
+- **Остановить VoceSpace**: `docker stop vocespace`
+- **Остановить LiveKit**: `pkill -f livekit-server`
+- **Остановить Redis**: `pkill -f redis-server`
+
+- **Перезапустить VoceSpace**: `docker restart vocespace`
+- **Проверить статус контейнера**: `docker ps`
+
+## Системные требования
+
+### Минимальные требования
+- **CPU**: 2 ядра
+- **Память**: 4GB RAM
+- **Диск**: 10GB свободного пространства
+- **Сеть**: Стабильное интернет-соединение
+
+### Поддерживаемые системы
+- **Linux**: Ubuntu 18.04+, CentOS 7+, Debian 10+
+- **macOS**: 10.14+
+- **Windows**: Windows 10/11 (требуется WSL2 или Docker Desktop)

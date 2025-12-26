@@ -1,0 +1,415 @@
+import { Tab, Tabs } from "@theme";
+
+# Docker + Nginx
+
+В этом руководстве вы узнаете, как развернуть ваше приложение в производственной среде с помощью Docker и Nginx, а также настроить сертификаты HTTPS для обеспечения безопасной связи.
+
+## 1. Копирование базовой конфигурации
+
+Ниже приведена базовая конфигурация для Vocespace. Вам необходимо скопировать эту конфигурацию перед запуском контейнера и указать её при запуске.
+
+Настройки по умолчанию: "ключ": `"devkey"`, "секрет": `"secret"` работают нормально. Однако, если вы хотите повысить безопасность и стабильность, вы можете сгенерировать пару ключ/ключ на размещенном сервере LiveKit.
+
+**[(Необязательно) Как получить ключ и секрет?](./help#как-получить-key-и-secret)**
+
+```json
+{
+  "livekit": {
+    "key": "devkey",
+    "secret": "secret",
+    "url": "wss://your.server.name" // modify ⚠️
+  },
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "medium",
+  "redis": { 
+    "enabled": true, 
+    "host": "your.ip",  // modify ⚠️
+    "port": 6379, 
+    "password": "vocespace", 
+    "db": 0 
+  },
+  "serverUrl": "your.server.name", // modify ⚠️
+  "hostToken": "vocespace",
+  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E"
+}
+```
+
+> [!WARNING]
+>
+> `your.ip`: IP-адрес хост-машины пользователя, который можно просмотреть с помощью команды `ifconfig | grep inet`.
+> ```bash
+> inet 127.0.0.1 netmask 0xff000000
+> inet 192.168.31.138 netmask 0xffffff00 broadcast 192.168.31.255
+> ```
+> В этом примере `192.168.31.138` — это IP-адрес вашей хост-машины.
+> 
+> `your.server.name`: Доменное имя, используемое для развертывания
+
+## 2. Развертывание приложений с помощью Docker
+
+### Получение образов VoceSpace
+
+VoceSpace содержит два типа образов:
+- amd: `privoce/vocespace:latest`
+- arm: `privoce/vocespace:latest_arm`
+
+Поэтому для выбора вам необходимо знать текущую архитектуру вашего сервера. См.: [справка - просмотр архитектуры вашего Linux](/ru/doc/deploy/help#проверка-архитектуры-linux)
+
+```shell
+# amd
+docker pull privoce/vocespace:latest
+# arm
+docker pull privoce/vocespace:latest_arm
+```
+
+### Запуск контейнера
+
+Перед настройкой обратного прокси Nginx необходимо запустить контейнер серверной службы.
+
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -v ${PWD}/vocespace.conf.json:/app/vocespace.conf.json \
+  --name vocespace \
+  privoce/vocespace:latest
+```
+
+> [!NOTE]
+>
+> * `-p 3000:3000`：Сопоставьте порт 3000 контейнера с портом 3000 хост-машины.
+> * `-v ${PWD}/vocespace.conf.json:/app/vocespace.conf.json`: Составьте карту конфигурации
+> * `--name`：Присвоение имени контейнеру упрощает последующее управление.
+
+
+## 3. Установка и настройка Nginx
+
+### 3.1 Установка Nginx и Certbot
+
+Убедитесь, что ваша система обновлена ​​и установлены необходимые пакеты:
+
+```bash
+apt update
+apt install nginx certbot python3-certbot-nginx -y
+```
+
+> [!WARNING]
+>
+> * Если вы используете CentOS или другой дистрибутив, отличный от Debian, воспользуйтесь соответствующей командой управления пакетами (например, `yum` или `dnf`).
+> * `certbot` и `python3-certbot-nginx` — это инструменты для автоматической настройки HTTPS.
+
+
+### 3.2 Настройте файл `nginx.conf` (глобальная конфигурация, её можно игнорировать).
+
+path：`/etc/nginx/nginx.conf`
+
+```nginx
+user  nginx;
+worker_processes  auto;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile        on;
+    keepalive_timeout  65;
+
+    include /etc/nginx/conf.d/*.conf;
+}
+```
+
+> [!NOTE]
+>
+> * Это глобальная конфигурация, и обычно её не нужно часто менять.
+> * Рекомендуется включить функцию logrotate для каталога логов, чтобы избежать заполнения дискового пространства.
+
+---
+
+### 3.3 Настройка файлов сайта (конфигурация виртуального хоста)
+
+Рекомендуемый путь: `/etc/nginx/sites-enabled/vocespace` или `/etc/nginx/conf.d/vocespace`
+
+Для начала выполним простую настройку:
+
+```nginx
+# Перенаправление HTTP на HTTPS
+server {
+    listen 80;
+    listen [::]:80;
+
+    server_name your.server.name; # modify ⚠️
+
+    location / {
+        return 301 https://$host$request_uri; # modify ⚠️
+    }
+
+    return 404;
+}
+```
+### 3.4 Получение HTTPS-сертификата с помощью Certbot
+
+Убедитесь, что доменное имя правильно преобразуется в IP-адрес сервера в вашем DNS-провайдере.
+
+#### Команда выдачи сертификата
+
+```bash
+certbot --nginx -d your.server.name --register-unsafely-without-email
+```
+
+> [!NOTE]
+>
+> * `--nginx`: Certbot автоматически изменит конфигурацию nginx, чтобы включить HTTPS.
+> * `--register-unsafely-without-email`：Не указывайте адрес электронной почты. **Не рекомендуется для официального использования**, рекомендуется добавить `--email your@email.com`.
+
+### Проверьте состояние Nginx и перезапустите его
+```bash
+nginx -t
+systemctl reload nginx
+```
+
+### 3.5 Завершите настройку HTTPS.
+
+```nginx
+# HTTPS Конфигурация обратного прокси
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name your.server.name;  # modify ⚠️
+
+    ssl_certificate /etc/letsencrypt/live/your.server.name/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your.server.name/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Основной сервис приложения (например, веб-интерфейс для внешнего или внутреннего интерфейса).
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Прокси-сервер WebRTC (порт и путь зависят от проекта)
+    location /rtc {
+        proxy_pass http://127.0.0.1:7880;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+    }
+
+    # В данном случае можно игнорировать прокси-сервер Socket.IO для обмена данными в реальном времени в nginx.
+    # location /socket.io {
+    #    proxy_pass http://127.0.0.1:3000; 
+    #    proxy_http_version 1.1;
+    #    proxy_set_header Upgrade $http_upgrade;
+    #    proxy_set_header Connection "Upgrade";
+    #    proxy_set_header Host $host;
+    #    proxy_set_header X-Real-IP $remote_addr;
+    #    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    #    proxy_set_header X-Forwarded-Proto $scheme;
+    #    proxy_cache_bypass $http_upgrade;
+    # }
+}
+```
+
+> [!WARNING]
+>
+> * `server_name` Это должно быть то же доменное имя, что и у сертификата, на который вы фактически подавали заявку.
+> * Пожалуйста, убедитесь, что файл в каталоге `/etc/letsencrypt/live/your.server.name/` создан.
+> Конфигурация SSL генерируется программой certbot.
+
+
+### 3.6 Запустите и проверьте состояние Nginx.
+
+```bash
+# Проверьте правильность настроек.
+nginx -t
+
+# Перезагрузите конфигурацию (рекомендуется) или перезапустите службу.
+systemctl reload nginx
+# or
+systemctl restart nginx
+```
+
+## 4. Запустите livekit-server
+
+Аналогично локальному развертыванию, для поддержки WebRTC также необходимо запустить livekit-server. Вы можете загрузить и запустить livekit, как при локальном развертывании, или использовать Docker для развертывания.
+
+<Tabs>
+  <Tab label="местный">
+    ### скачать livekit-server
+    
+    ```bash
+    curl -sSL https://get.livekit.io | bash
+    ```
+    
+    После загрузки сервер обычно будет расположен в `/usr/local/bin/livekit-server`
+
+    ### Создание конфигурации
+
+    Мы предлагаем минимальное руководство по настройке, которое поможет вам быстро развернуть систему. Сначала создайте файл конфигурации `vim /etc/livekit.yml`
+    ```yml
+    port: 7880
+    bind_addresses:
+        - "0.0.0.0"
+    rtc:
+        tcp_port: 7881
+        port_range_start: 50000
+        port_range_end: 60000
+        use_external_ip: true
+        enable_loopback_candidate: false
+    # optional
+    turn:
+        enabled: false
+        domain: turn.vocespace.xyz
+        tls_port: 5349
+        udp_port: 3478
+        external_tls: true
+    keys:
+      devkey: secret
+    ```
+
+    ### Запуск в фоновом режиме с помощью команды `nohup`.
+
+    С помощью команды `nohup` вы можете запустить livekit-server в фоновом режиме и выводить логи в файл `/usr/local/bin/logs/livekit_output.log` для удобного просмотра.
+    
+    ```bash
+    nohup /usr/local/bin/livekit-server --config /etc/livekit.yml > /usr/local/bin/logs/livekit_output.log 2>&1 &
+    ```
+
+
+  </Tab>
+  <Tab label="Docker">
+  ### docker скачать livekit-server
+  ```bash
+  docker pull livekit/livekit-server:latest
+  ```
+    ### Создание конфигурации
+
+    Мы предоставляем минимальный шаблон конфигурации, который поможет вам быстро развернуть систему. Сначала создайте файл конфигурации `vim /etc/livekit.yml`
+    ```yml
+    port: 7880
+    bind_addresses:
+        - "0.0.0.0"
+    rtc:
+        tcp_port: 7881
+        port_range_start: 50000
+        port_range_end: 60000
+        use_external_ip: true
+        enable_loopback_candidate: false
+    turn:
+        enabled: false
+        domain: turn.vocespace.xyz
+        tls_port: 5349
+        udp_port: 3478
+        external_tls: true
+    keys:
+      devkey: secret
+    ```
+
+    ### Запуск livekit-server
+
+    Также используется файл конфигурации
+
+    ```bash
+    docker run -d \
+      --network host \
+      --name livekit-server \
+      -v /etc/livekit.yml:/etc/livekit.yaml \
+      livekit/livekit-server \
+      --config /etc/livekit.yaml
+    ```
+    Вы также можете выполнить сопоставление портов по одному, не используя хост, но это займет много времени.
+    ```bash
+    docker run -d \
+      --name livekit-server \
+      -p 7880:7880 \
+      -p 50000-60000:50000-60000/udp \
+      -v /etc/livekit.yml:/etc/livekit.yaml \
+      livekit/livekit-server \
+      --config /etc/livekit.yaml
+    ```
+  </Tab>
+</Tabs>
+
+## 5. Скачайте и запустите Redis.
+
+<Tabs>
+    <Tab label="Macos">
+    ```bash
+    brew install redis
+    brew services start redis -- --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no --daemonize yes
+    ```
+    </Tab>
+    <Tab label="Windows" style={{padding: "6px"}}>
+        Нажмите, чтобы скачать [Redis-Windows](https://github.com/tporadowski/redis/releases/download/v5.0.14.1/Redis-x64-5.0.14.1.msi)
+        ```bash
+        redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no --daemonize yes
+        ```
+    </Tab>
+    <Tab label="Linux">
+    ```bash
+    apt install redis-server
+    redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no --daemonize yes
+    systemctl restart redis
+    ```
+    </Tab>
+</Tabs>
+
+## Инструкции по работе с облачными серверами
+
+### Настройка групп безопасности/брандмауэров
+
+При использовании облачных серверов, таких как Alibaba Cloud, Tencent Cloud и Google Cloud, необходимо настроить группы безопасности/брандмауэры сервера.
+
+| port | type | ingress/egress | allow ip |
+|--|--|--|--|
+| 3000 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 3000 | tcp | egress | 0.0.0.0/0 Ipv4 |
+| 7880 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 7881 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 80 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 443 |tcp | ingress | 0.0.0.0/0 Ipv4 |
+|50000~60000| udp | ingress | 0.0.0.0/0 Ipv4 |
+
+
+## Дополнительные рекомендации
+
+**Автоматическое обновление сертификатов**:
+
+``bash
+# Тест обновления
+certbot renew --dry-run
+```
+
+**Открытие портов брандмауэра** (например, с помощью `ufw`):
+
+``bash
+ufw allow 'Nginx Full'
+```
+
+**Усиление безопасности и принудительное использование HTTPS**: Добавьте следующую конфигурацию в `nginx.conf`:
+
+```nginx
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers on;
+```

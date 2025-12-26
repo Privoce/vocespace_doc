@@ -4,6 +4,7 @@
     "local_docker",
     "docker_nginx",
     "docker_caddy",
+    "nas",
     "flex",
     "help",
     "scripts"

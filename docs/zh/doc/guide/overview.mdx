@@ -1,5 +1,6 @@
 import MyLinkCard from "@theme/components/LinkCard";
 import Container from "@theme/components/Container";
+import { Tab, Tabs } from "@theme";
 
 # 总览
 
@@ -7,7 +8,7 @@ import Container from "@theme/components/Container";
 
 ## QuickStart
 
-### 本地一键安装VoceSpace进行体验
+### 本地一键安装 VoceSpace 进行体验
 
 请将`your_ip`修改为真实`ip`
 
@@ -15,24 +16,35 @@ import Container from "@theme/components/Container";
 curl https://vocespace.com/local_deploy/local_deploy.sh|bash --host-ip your_ip
 ```
 
+### 使用 VoceChat 部署 VoceSpace
+
+<Tabs>
+  <Tab label="NAS">
+    [NAS deploy video](https://vocespace.com/local_deploy/nas.mp4)
+    <video src="https://vocespace.com/local_deploy/nas.mp4" controls></video>
+  </Tab>
+  <Tab label="VPS">
+   [VPS deploy video](https://vocespace.com/local_deploy/vps.mp4)
+    <video src="https://vocespace.com/local_deploy/vps.mp4" controls></video>
+  </Tab>
+</Tabs>
 
 ## 更多
 
 希望以下内容能帮助您更好地了解 VoceSpace 项目。如果您有任何疑问或需要进一步的帮助，请随时查阅相关文档或与我们联系。
 
 <Container>
-    <MyLinkCard
-        href="/doc/guide/overview"
-        title="指南"
-        description="对VoceSpace进行基本了解。"
-    />
-    <MyLinkCard
-        href="/doc/deploy/overview"
-        title="部署"
-        description="通过我们的部署文档，您可以在几分钟内快速进行部署到生产环境并进行自定义化配置。"
-    />
+  <MyLinkCard
+    href="/doc/guide/overview"
+    title="指南"
+    description="对VoceSpace进行基本了解。"
+  />
+  <MyLinkCard
+    href="/doc/deploy/overview"
+    title="部署"
+    description="通过我们的部署文档，您可以在几分钟内快速进行部署到生产环境并进行自定义化配置。"
+  />
 </Container>
-
 
 ## 联系与反馈
 

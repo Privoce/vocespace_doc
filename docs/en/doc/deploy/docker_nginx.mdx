@@ -32,7 +32,7 @@ The defaul "key": `"devkey"`, "secret": `"secret"` works well, however, if you w
     "db": 0 
   },
   "serverUrl": "your.server.name", // modify ⚠️
-  "hostToken": "vocespace_privoce",
+  "hostToken": "vocespace",
   "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E"
 }
 ```
@@ -339,6 +339,7 @@ Like local deployment, you also need to start livekit-server to support webrtc. 
       --name livekit-server \
       -p 7880:7880 \
       -p 50000-60000:50000-60000/udp \
+      -v /etc/livekit.yml:/etc/livekit.yaml \
       livekit/livekit-server \
       --config /etc/livekit.yaml
     ```
@@ -351,19 +352,19 @@ Like local deployment, you also need to start livekit-server to support webrtc. 
     <Tab label="Macos">
     ```bash
     brew install redis
-    brew services start redis -- --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+    brew services start redis -- --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no --daemonize yes
     ```
     </Tab>
     <Tab label="Windows" style={{padding: "6px"}}>
         Click to download [Redis-Windows](https://github.com/tporadowski/redis/releases/download/v5.0.14.1/Redis-x64-5.0.14.1.msi)
         ```bash
-        redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+        redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no --daemonize yes
         ```
     </Tab>
     <Tab label="Linux">
     ```bash
     apt install redis-server
-    redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no
+    redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no --daemonize yes
     systemctl restart redis
     ```
     </Tab>

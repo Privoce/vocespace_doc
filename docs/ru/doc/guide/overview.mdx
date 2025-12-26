@@ -1,0 +1,61 @@
+import MyLinkCard from "@theme/components/LinkCard";
+import Container from "@theme/components/Container";
+import { Tab, Tabs } from "@theme";
+
+# Обзор
+
+Добро пожаловать на страницу обзора руководства VoceSpace! Здесь вы можете быстро узнать о VoceSpace и выбрать необходимые ресурсы.
+
+## Быстрый старт
+
+### Локальная установка VoceSpace в один клик для вашего удобства
+
+Пожалуйста, замените `your_ip` на ваш реальный `IP`
+
+```bash
+curl https://vocespace.com/local_deploy/local_deploy.sh|bash --host-ip your_ip
+```
+
+### Развертывание VoceSpace с использованием VoceChat
+
+<Tabs>
+  <Tab label="NAS">
+    [NAS deploy video](https://vocespace.com/local_deploy/nas.mp4)
+    <video src="https://vocespace.com/local_deploy/nas.mp4" controls></video>
+  </Tab>
+  <Tab label="VPS">
+    [VPS deploy video](https://vocespace.com/local_deploy/vps.mp4)
+    <video src="https://vocespace.com/local_deploy/vps.mp4" controls></video>
+  </Tab>
+</Tabs>
+
+## Подробнее
+
+Мы надеемся, что следующая информация поможет вам лучше понять проект VoceSpace. Если у вас возникнут вопросы или потребуется дополнительная помощь, пожалуйста, обратитесь к соответствующей документации или свяжитесь с нами.
+
+<Container>
+
+<MyLinkCard
+href="/doc/guide/overview"
+title="Guide"
+description="Получите базовое представление о VoceSpace."
+/>
+
+<MyLinkCard
+href="/doc/deploy/overview"
+title="Deployment"
+description="С помощью нашей документации по развертыванию вы сможете быстро развернуть приложение в продакшене и настроить конфигурацию за считанные минуты."
+/>
+
+</Container>
+
+## Контакты и обратная связь
+
+:::info
+VoceSpace в настоящее время находится на ранних этапах разработки, и многие функции все еще находятся на стадии планирования и реализации. Мы приветствуем отзывы и сотрудничество сообщества! Если у вас есть какие-либо предложения, вам нужно сообщить о проблеме или вы хотите добавить функцию, пожалуйста, свяжитесь с нами по следующим каналам:
+
+:::
+
+- **GitHub**: [https://github.com/Privoce/vocespace-client](https://github.com/Privoce/vocespace-client)
+- **Demo**: [demo](https://space.voce.chat/)
+- **Collaboration Email**: `han@privoce.com`

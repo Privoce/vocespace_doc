@@ -1,0 +1,45 @@
+import MyLinkCard from "@theme/components/LinkCard";
+import Container from "@theme/components/Container";
+
+# Обзор
+
+Мы создали образ Docker, который позволяет быстро развернуть и оценить VoceSpace.
+
+<Container>
+  <MyLinkCard
+    href="/doc/deploy/quickstart"
+    title="QuickStart"
+    description="VoceSpace можно быстро развернуть локально с помощью одной команды в скрипте."
+  />
+  <MyLinkCard
+    href="/doc/deploy/local_docker"
+    title="Локальное развертывание"
+    description="Быстрая локальная сборка с использованием образов Docker."
+  />
+</Container>
+
+<Container>
+  <MyLinkCard
+    href="/doc/deploy/docker_nginx"
+    title="Docker + Nginx"
+    description="Используйте предоставленный нами образ Docker для создания контейнеров и используйте nginx для развертывания сервера."
+  />
+  <MyLinkCard
+    href="/doc/deploy/docker_caddy"
+    title="Docker + Caddy"
+    description="Используйте предоставленный нами образ Docker для создания контейнеров и Caddy для развертывания сервера."
+  />
+</Container>
+
+<Container>
+  <MyLinkCard
+    href="/doc/deploy/flex"
+    title="Гибкое развертывание"
+    description="Начиная с компиляции из исходного кода, процесс развертывания выполняется поэтапно, включая nginx/caddy, pm2, tls, turn..."
+  />
+  <MyLinkCard
+    href="/doc/deploy/help"
+    title="помощь"
+    description="Если у вас возникла проблема, вы можете найти здесь её решение."
+  />
+</Container>

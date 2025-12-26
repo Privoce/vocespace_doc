@@ -1,0 +1,338 @@
+# NAS Private Deployment
+
+NAS (Network Attached Storage) is a small server dedicated to file management — it mounts disks on the local network and provides file access, backups, sharing, versioned snapshots, media services, etc. It is not intended for running general compute tasks.
+
+Common NAS vendors:
+- Synology
+- Lenovo Personal Cloud / ZhiKong / Ugreen
+- Western Digital My Cloud
+- ...
+
+No domain required — private deployment
+
+## Local NAS deployment video
+
+The video demonstrates obtaining the deployment script from VoceChat embedded VoceSpace and deploying with it.
+
+If you only want to deploy VoceSpace, download the deployment script and follow the "Manual script deployment" section below.
+
+<video src="https://vocespace.com/local_deploy/nas.mp4" controls></video>
+
+### Download the deployment script
+
+Click to download the shell script below:
+
+[NAS.sh](https://vocespace/local_deploy/nas.sh)
+
+Script summary:
+- Pulls all required Docker images
+- Automatically creates containers
+- Does not configure proxy
+
+## Manual script deployment
+
+You don't need to modify anything — run the script directly:
+
+```bash
+# SSH into your server
+ssh your.account@your.nas.ip
+
+# Switch to root if needed
+sudo -i
+
+# Paste the script into deploy.sh and save (:wq)
+vim ./deploy.sh
+
+# Make executable (note: using 644 per original instructions)
+chmod 644 ./deploy.sh
+
+# Run the script
+sh ./deploy.sh
+```
+
+After completion you should see these containers running:
+
+- redis
+- vocespace
+- livekit-server
+
+![nas_container](/nas/nas_1.png)
+
+Note: the `vocespace` container may fail to start because `vocespace.conf.json` lacks read/write permissions.
+
+### Add read/write permission for `vocespace.conf.json`
+
+`vocespace.conf.json` is located where you ran the script. If you check the container logs you'll likely see: `/app/vocespace.conf.json: Permission denied`
+
+```bash
+chmod 644 ./vocespace.conf.json
+```
+
+After granting permission, restart the `vocespace` container.
+
+## LAN access
+
+At this point your local installation should be complete and containers running, but the service still uses `http` and `ws`, which won't work for secure communications. Let's continue.
+
+![alt text](/nas/image_1.png)
+
+### Duplicate the VoceSpace container
+
+Right-click the `vocespace` container and choose "Duplicate" to create a new instance. Change the original port mapping of `3008` to `3006` (or any other unused port except 3008).
+
+![alt text](/nas/image_2.png)
+
+![alt text](/nas/image_3.png)
+
+### Duplicate the livekit-server container
+
+Also duplicate `livekit-server`. Add the following two environment variables so WebRTC won't route through the public internet. Make sure to use your NAS IP exactly.
+
+- `LIVEKIT_NODE_IP = your.nas.server.ip`
+- `LIVEKIT_RTC_USE_EXTERNAL_IP = false`
+
+![alt text](/nas/image_5.png)
+
+### Remove the previous containers
+
+After duplication you can remove the original VoceSpace and livekit-server containers.
+
+![alt text](/nas/image_4.png)
+
+## Configure Nginx reverse proxy
+
+### Find VoceSpace IP inside Docker
+
+Run the command below to list all containers' IPs and find the VoceSpace container IP — remember it.
+
+```bash
+# Become root
+sudo -i
+
+# Query container IPs
+docker ps -q | xargs -n 1 docker inspect -f '{{.Name}}: {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+```
+
+![alt text](/nas/image_8.png)
+
+### Configure the proxy
+
+Open Control Panel → Login Portal → Advanced → Reverse Proxy.
+
+Add a new rule and save.
+
+- Source
+  - Protocol: HTTPS
+  - Hostname: (leave blank)
+  - Port: 3008
+- Destination
+  - Protocol: HTTP
+  - Hostname: (this is the VoceSpace Docker IP)
+  - Port: 3000
+
+![alt text](/nas/image_7.png)
+
+### Add RTC configuration
+
+Now modify the Nginx config to upgrade ws to wss for RTC.
+
+```
+# Change to nginx sites-enabled
+cd /usr/local/etc/nginx/sites-enabled
+# Edit the proxy server config
+vim server.ReverseProxy.conf
+```
+
+The file should look like this when opened:
+
+```nginx
+server {
+    listen 3008 ssl default_server;
+    listen [::]:3008 ssl default_server;
+
+    server_name _;
+
+    include /usr/syno/etc/www/certificate/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4/cert.conf*;
+
+    include /usr/syno/etc/security-profile/tls-profile/config/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4.conf*;
+
+    proxy_ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+
+    location / {
+
+        proxy_connect_timeout 60;
+
+        proxy_read_timeout 60;
+
+        proxy_send_timeout 60;
+
+        proxy_intercept_errors off;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header        Upgrade            $http_upgrade;
+
+        proxy_set_header        Connection            $connection_upgrade;
+
+        proxy_set_header        Host            $http_host;
+
+        proxy_set_header        X-Real-IP            $remote_addr;
+
+        proxy_set_header        X-Forwarded-For            $proxy_add_x_forwarded_for;
+
+        proxy_set_header        X-Forwarded-Proto            $scheme;
+
+        proxy_pass http://172.17.0.2:3000;
+
+    }
+
+    error_page 403 404 500 502 503 504 /dsm_error_page;
+
+    location /dsm_error_page {
+        internal;
+        root /usr/syno/share/nginx;
+        rewrite (.*) /error.html break;
+        allow all;
+    }
+
+}
+```
+
+Insert the following block just above `location / {` to handle RTC upgrade:
+
+```nginx
+location /rtc {
+
+    proxy_pass http://127.0.0.1:7880;
+
+    proxy_http_version 1.1;
+
+    proxy_set_header Upgrade $http_upgrade;
+
+    proxy_set_header Connection "Upgrade";
+
+    proxy_set_header Host $host;
+
+}
+```
+
+After editing, save and exit (`ESC` then `:wq`).
+
+The full config becomes:
+
+```nginx
+server {
+    listen 3008 ssl default_server;
+    listen [::]:3008 ssl default_server;
+
+    server_name _;
+
+    include /usr/syno/etc/www/certificate/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4/cert.conf*;
+
+    include /usr/syno/etc/security-profile/tls-profile/config/ReverseProxy_e7f64ca5-8ca2-4f67-bf01-16e3c2cb0bd4.conf*;
+
+    proxy_ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+
+    location /rtc {
+
+        proxy_pass http://127.0.0.1:7880;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header Upgrade $http_upgrade;
+
+        proxy_set_header Connection "Upgrade";
+
+        proxy_set_header Host $host;
+
+    }
+
+        location / {
+
+        proxy_connect_timeout 60;
+
+        proxy_read_timeout 60;
+
+        proxy_send_timeout 60;
+
+        proxy_intercept_errors off;
+
+        proxy_http_version 1.1;
+
+        proxy_set_header        Upgrade            $http_upgrade;
+
+        proxy_set_header        Connection            $connection_upgrade;
+
+        proxy_set_header        Host            $http_host;
+
+        proxy_set_header        X-Real-IP            $remote_addr;
+
+        proxy_set_header        X-Forwarded-For            $proxy_add_x_forwarded_for;
+
+        proxy_set_header        X-Forwarded-Proto            $scheme;
+
+        proxy_pass http://172.17.0.2:3000;
+
+    }
+
+    error_page 403 404 500 502 503 504 /dsm_error_page;
+
+    location /dsm_error_page {
+        internal;
+        root /usr/syno/share/nginx;
+        rewrite (.*) /error.html break;
+        allow all;
+    }
+
+}
+```
+
+### Reload nginx
+
+```bash
+systemctl reload nginx
+```
+
+### Ensure VoceSpace config and restart container
+
+Edit the VoceSpace configuration file and restart the VoceSpace container:
+
+```bash
+vim /volume1/share/data/vocespace.conf.json
+```
+
+Pay attention to these settings in the config:
+
+1. In `livekit`, set the URL to: `wss://your.server.ip:3008` — note the port is `3008`, not `7880`.
+2. In `redis`, set `host` to your server IP.
+
+Example:
+
+```json
+{
+    "livekit": {
+        "key": "APIQLeUrXGujRQk",
+        "secret": "fWHUA2CQlfi1iG4L3YqWKIhXuF9aqvlO5uTWAuHoLKm",
+        "url": "wss://192.168.31.249:3008"
+    },
+    "codec": "vp9",
+    "resolution": "1080p",
+    "maxBitrate": 3000000,
+    "maxFramerate": 30,
+    "priority": "medium",
+    "redis": {
+        "enabled": true,
+        "host": "192.168.31.249",
+        "port": 6379,
+        "password": "vocespace",
+        "db": 0
+    },
+    "server_url": "192.168.31.249",
+    "host_token": "vocespace",
+    "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjE3NzkyNzg0MDAsImNyZWF0ZWRfYXQiOjE3NDc3NDI0MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJwcm8iLCJpZCI6IjZkZjgyMTMyLTIyODQtNGY2MS1iYmZhLWZkZmU4YmMzMWE2NyJ9.PiagYRDWSpzhIdbnY-pp8QeOf5Ij7neV8RMEafDgVT4"
+}
+```
+
+After confirming the config, restart the VoceSpace container and log in. If you see the screen below, LAN access is successfully configured.
+
+![alt text](/nas/image_9.png)

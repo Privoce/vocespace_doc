@@ -1,0 +1,318 @@
+import { Tab, Tabs } from "@theme";
+
+# Docker + Caddy
+
+Caddy проще, чем Nginx, потому что он может автоматически запрашивать сертификаты.
+
+Вам необходимо сначала запустить контейнер проекта, а затем установить и настроить Caddy, иначе запрос сертификата может завершиться неудачей.
+
+
+## 1. Копирование базовой конфигурации
+
+Ниже приведена базовая конфигурация для VoceSpace. Вам необходимо скопировать эту конфигурацию перед запуском контейнера и указать её при запуске.
+
+Настройки по умолчанию: "key": `"devkey"`, "secret": `"secret"` работают нормально. Однако, если вы хотите повысить безопасность и стабильность, вы можете сгенерировать пару ключ/секрет на размещенном сервере LiveKit.
+
+**[(Необязательно) Как получить key и secret?](./help#как-получить-key-и-secret)**
+
+```json
+{
+  "livekit": {
+    "key": "devkey",
+    "secret": "secret",
+    "url": "wss://your.server.name" // modify ⚠️
+  },
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "medium",
+  "redis": { 
+    "enabled": true, 
+    "host": "your.ip",  // modify ⚠️
+    "port": 6379, 
+    "password": "vocespace", 
+    "db": 0 
+  },
+  "serverUrl": "your.server.name", // modify ⚠️
+  "hostToken": "vocespace",
+  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E"
+}
+```
+
+> [!WARNING]
+>
+> `your.ip`: IP-адрес хост-машины пользователя, который можно просмотреть с помощью команды `ifconfig | grep inet`.
+> ```bash
+> inet 127.0.0.1 netmask 0xff000000
+> inet 192.168.31.138 netmask 0xffffff00 broadcast 192.168.31.255
+> ```
+> В этом примере `192.168.31.138` — это IP-адрес вашей хост-машины.
+> 
+> `your.server.name`: Доменное имя, используемое для развертывания
+
+## 2. Развертывание приложения с помощью Docker
+
+### Получение образа VoceSpace
+
+VoceSpace содержит два типа образов:
+- amd: `privoce/vocespace:latest`
+- arm: `privoce/vocespace:latest_arm`
+
+Поэтому для выбора вам необходимо знать текущую архитектуру вашего сервера. См.: [справка - просмотр архитектуры вашего Linux](/ru/doc/deploy/help#проверка-архитектуры-linux)
+
+```shell
+# amd
+docker pull privoce/vocespace:latest
+# arm
+docker pull privoce/vocespace:latest_arm
+```
+
+### Запуск контейнера
+
+Вам необходимо сначала запустить контейнер проекта, а затем установить и настроить Caddy, иначе запрос сертификата может завершиться неудачей.
+
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -v ${PWD}/vocespace.conf.json:/app/vocespace.conf.json \
+  --name vocespace \
+  privoce/vocespace:latest
+```
+
+> [!NOTE]
+>
+> * `-p 3000:3000`：Сопоставьте порт 3000 контейнера с портом 3000 хост-машины.
+> * `-v ${PWD}/vocespace.conf.json:/app/vocespace.conf.json`: Монтирование конфигурации
+> * `--name`：Присвоение имени контейнеру упрощает последующее управление.
+
+
+## 3. Установка и настройка Caddy
+
+> [!INFO]
+>
+> Ниже приведен метод установки для Ubuntu/Debian
+>
+> Для других типов обратитесь к: [Caddy install](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
+
+### 3.1 Установка Caddy
+
+```bash
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install caddy
+```
+
+### 3.2 Настройка Caddy
+
+Caddy поддерживает несколько способов настройки, а также напрямую поддерживает использование конфигурационных файлов в стиле nginx.
+
+> [!WARNING]
+>
+> Пожалуйста, убедитесь, что вы приобрели доменное имя и выполнили DNS-разрешение
+
+```bash
+vim /etc/caddy/Caddyfile
+```
+
+```nginx
+your.server.name {  # modify ⚠️
+    # webrtc
+    handle /rtc* {
+        reverse_proxy localhost:7880 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /socket.io/* {
+        reverse_proxy localhost:3000 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # main app https
+    handle {
+        reverse_proxy localhost:3000 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # log optional
+    #log {
+    #    output file /var/log/caddy/your.server.name.log
+    #    level DEBUG
+    #}
+}
+```
+
+## 4. Запуск livekit-server
+
+Аналогично локальному развертыванию, для поддержки WebRTC также необходимо запустить livekit-server. Вы можете загрузить и запустить livekit, как при локальном развертывании, или использовать Docker для развертывания
+
+<Tabs>
+  <Tab label="Локальный">
+    ### Загрузка livekit-server
+    
+    ```bash
+    curl -sSL https://get.livekit.io | bash
+    ```
+    
+    После загрузки сервер обычно будет расположен в `/usr/local/bin/livekit-server`
+
+    ### Создание конфигурации
+    Мы предоставляем минимальный шаблон конфигурации, который поможет вам быстро развернуть систему. Сначала создайте файл конфигурации `vim /etc/livekit.yml`
+    ```yml
+    port: 7880
+    bind_addresses:
+        - "0.0.0.0"
+    rtc:
+        tcp_port: 7881
+        port_range_start: 50000
+        port_range_end: 60000
+        use_external_ip: true
+        enable_loopback_candidate: false
+    # optional
+    turn:
+        enabled: false
+        domain: turn.vocespace.xyz
+        tls_port: 5349
+        udp_port: 3478
+        external_tls: true
+    keys:
+      devkey: secret
+    ```
+
+    ### Запуск в фоновом режиме с помощью nohup
+
+    С помощью команды `nohup` вы можете запустить livekit-server в фоновом режиме и выводить логи в файл `/usr/local/bin/logs/livekit_output.log` для удобного просмотра
+    
+    ```bash
+    nohup /usr/local/bin/livekit-server --config /etc/livekit.yml > /usr/local/bin/logs/livekit_output.log 2>&1 &
+    ```
+
+
+  </Tab>
+  <Tab label="Docker">
+  ### Docker загрузка livekit-server
+  ```bash
+  docker pull livekit/livekit-server:latest
+  ```
+    ### Создание конфигурации
+    Мы предоставляем минимальный шаблон конфигурации, который поможет вам быстро развернуть систему. Сначала создайте файл конфигурации `vim /etc/livekit.yml`
+    ```yml
+    port: 7880
+    bind_addresses:
+        - "0.0.0.0"
+    rtc:
+        tcp_port: 7881
+        port_range_start: 50000
+        port_range_end: 60000
+        use_external_ip: true
+        enable_loopback_candidate: false
+    turn:
+        enabled: false
+        domain: turn.vocespace.xyz
+        tls_port: 5349
+        udp_port: 3478
+        external_tls: true
+    keys:
+      devkey: secret
+    ```
+
+    ### Запуск livekit-server
+
+    Также используется файл конфигурации
+
+    ```bash
+    docker run -d \
+      --network host \
+      --name livekit-server \
+      -v /etc/livekit.yml:/etc/livekit.yaml \
+      livekit/livekit-server \
+      --config /etc/livekit.yaml
+    ```
+    Вы также можете выполнить сопоставление портов по одному, не используя host, но это займет много времени
+    ```bash
+    docker run -d \
+      --name livekit-server \
+      -p 7880:7880 \
+      -p 50000-60000:50000-60000/udp \
+      -v /etc/livekit.yml:/etc/livekit.yaml \
+      livekit/livekit-server \
+      --config /etc/livekit.yaml
+    ```
+  </Tab>
+</Tabs>
+
+## 5. Загрузка и запуск Redis
+
+<Tabs>
+    <Tab label="Macos">
+    ```bash
+    brew install redis
+    brew services start redis -- --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no --daemonize yes
+    ```
+    </Tab>
+    <Tab label="Windows" style={{padding: "6px"}}>
+        Нажмите, чтобы скачать [Redis-Windows](https://github.com/tporadowski/redis/releases/download/v5.0.14.1/Redis-x64-5.0.14.1.msi)
+        ```bash
+        redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no --daemonize yes
+        ```
+    </Tab>
+    <Tab label="Linux">
+    ```bash
+    apt install redis-server
+    redis-server --requirepass "vocespace" --bind 0.0.0.0 --protected-mode no --daemonize yes
+    systemctl restart redis
+    ```
+    </Tab>
+</Tabs>
+
+## Перезапуск Caddy и автозапуск при загрузке
+
+```bash
+systemctl stop caddy
+systemctl enabled caddy
+systemctl start caddy
+```
+
+## Инструкции по работе с облачными серверами
+
+### Настройка групп безопасности/брандмауэров
+
+При использовании облачных серверов, таких как Alibaba Cloud, Tencent Cloud, Google Cloud и т.д., необходимо настроить группы безопасности/брандмауэры сервера
+
+| port | type | ingress/egress | allow ip |
+|--|--|--|--|
+| 3000 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 3000 | tcp | egress | 0.0.0.0/0 Ipv4 |
+| 7880 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 7881 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 80 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 443 |tcp | ingress | 0.0.0.0/0 Ipv4 |
+|50000~60000| udp | ingress | 0.0.0.0/0 Ipv4 |
+
+## Перезапуск Caddy и автозапуск при загрузке
+
+```bash
+systemctl stop caddy
+systemctl enabled caddy
+systemctl start caddy
+```
