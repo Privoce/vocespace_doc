@@ -87,6 +87,9 @@ chmod 644 ./vocespace.conf.json
 
 ### 复制新的livekit-server
 
+> [!WARNING]
+> 如果你需要外部访问请跳过这步
+
 同样我们需要复制一个新的livekit-server容器，因为我们需要增加两个参数以确保webrtc服务不会通过外网转发，将下面的两个环境参数添加进去。不要填错你自己的IP！
 
 - LIVEKIT_NODE_IP = your.nas.server.ip
@@ -126,7 +129,7 @@ docker ps -q | xargs -n 1 docker inspect -f '{{.Name}}: {{range.NetworkSettings.
 
 - 来源
     - 协议：HTTPS
-    - 主机名：不需要写
+    - 主机名：不需要写 (如果有域名可以使用域名)
     - 端口：3008
 - 目的地
     - 协议：HTTP
@@ -339,3 +342,30 @@ vim /volume1/share/data/vocespace.conf.json
 确定配置没有任何问题之后，重启VoceSpace容器并进行登录，如果你看到如下画面，那么恭喜你成功完成内网访问
 
 ![alt text](/nas/image_9.png)
+
+## 问题处理
+
+### rtc访问受限
+
+rtc访问受限的原因一般有两个：
+1. 错误的vocespace配置
+2. 由于server配置太差导致服务无法正常启动
+
+对于这些问题可以采取适当提升服务器配置(最低2核2G)，配置问题可以查看vocespace.conf.json文件确定是否是livekit.url配置错误
+
+### 外部端口访问
+
+NAS上配置过路由器配置可能会导致外部无法访问，此时需要添加端口规则
+
+![route](/nas/route.png)
+
+| port | type | ingress/egress | allow ip |
+|--|--|--|--|
+| 3008 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 3008 | tcp | egress | 0.0.0.0/0 Ipv4 |
+| 7880 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 7881 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 6379 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 80 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 443 |tcp | ingress | 0.0.0.0/0 Ipv4 |
+|50000~60000| udp | ingress | 0.0.0.0/0 Ipv4 |

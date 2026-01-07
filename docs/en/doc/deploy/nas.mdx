@@ -336,3 +336,32 @@ Example:
 After confirming the config, restart the VoceSpace container and log in. If you see the screen below, LAN access is successfully configured.
 
 ![alt text](/nas/image_9.png)
+
+## Errors
+
+### Restricted RTC Access
+
+Restricted RTC access generally stems from two reasons:
+
+1. Incorrect Vocesspace configuration
+
+2. Inadequate server configuration preventing the service from starting correctly.
+
+To address these issues, consider upgrading the server configuration (minimum 2 cores and 2GB RAM). For configuration problems, check the vocesspace.conf.json file to determine if the livekit.url configuration is incorrect.
+
+### External Port Access
+
+Configuring a router on the NAS may prevent external access. In this case, you need to add port rules.
+
+![route](/nas/route.png)
+
+| port | type | ingress/egress | allow ip |
+|--|--|--|--|
+| 3008 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 3008 | tcp | egress | 0.0.0.0/0 Ipv4 |
+| 7880 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 7881 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 6379 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 80 | tcp | ingress | 0.0.0.0/0 Ipv4 |
+| 443 |tcp | ingress | 0.0.0.0/0 Ipv4 |
+|50000~60000| udp | ingress | 0.0.0.0/0 Ipv4 |
