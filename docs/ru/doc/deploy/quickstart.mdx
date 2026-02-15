@@ -84,7 +84,7 @@ vocespace_deploy.bat --skip-redis --skip-livekit
   "livekit": {
     "key": "devkey",
     "secret": "secret",
-    "url": "wss://your.ip:7880"
+    "url": "wss://your.server.name" // modify ⚠️
   },
   "codec": "vp9",
   "resolution": "1080p",
@@ -93,14 +93,16 @@ vocespace_deploy.bat --skip-redis --skip-livekit
   "priority": "medium",
   "redis": { 
     "enabled": true, 
-    "host": "your.ip",
+    "host": "your.ip",  // modify ⚠️
     "port": 6379, 
     "password": "vocespace", 
     "db": 0 
   },
-  "serverUrl": "localhost",
+  "serverUrl": "your.server.name", // modify ⚠️
   "hostToken": "vocespace",
-  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E"
+  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E",
+  "create_space": "all",
+  "whiteList": []
 }
 ```
 
