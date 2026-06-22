@@ -1,0 +1,145 @@
+# Global Configuration
+
+The global configuration panel is used to manage VoceSpace system settings.
+
+![Global Configuration](/features/configSpace.png)
+
+## Accessing Global Configuration
+
+In the Dashboard home page action menu, click "Global Configuration" to open the configuration panel.
+
+## Configuration Items
+
+### Audio/Video Configuration
+
+| Setting | Description | Options |
+|---------|-------------|---------|
+| Codec | Select video encoding format | `vp9` / `vp8` / `h264` / `av1` |
+| Resolution | Set video resolution | `720p` / `1080p` / `4k` |
+| Max Bitrate | Limit maximum video bitrate, affecting quality and bandwidth | Numeric value, e.g., `3000000` |
+| Max Framerate | Set maximum video framerate | Numeric value, e.g., `30` |
+| Priority | Transmission priority during network congestion | `high` / `medium` / `low` |
+
+Configuration example:
+```json
+{
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "high"
+}
+```
+
+### TURN Server Configuration
+
+| Setting | Description |
+|---------|-------------|
+| URLs | TURN server address array |
+| Username | TURN server authentication username |
+| Password | TURN server authentication password |
+
+Configuration example:
+```json
+{
+  "livekit": {
+    "turn": {
+      "urls": ["turn:your-turn-server.com:3478"],
+      "username": "your-username",
+      "credential": "your-password"
+    }
+  }
+}
+```
+
+> TURN servers are used to establish P2P connections in NAT/firewall environments.
+
+### AI Configuration
+
+| Setting | Description | Example Value |
+|---------|-------------|---------------|
+| Enabled | Whether to enable AI features | `true` / `false` |
+| API Key | Access key for the AI service | `xxxx` |
+| API URL | Interface URL of the AI service | `xxxx` |
+| Model | AI model name in use | `qwen3-omni-flash` |
+| Max Tokens | Maximum output length for AI analysis | `4000` |
+
+Configuration example:
+```json
+{
+  "ai": {
+    "enabled": true,
+    "apiKey": "xxxx",
+    "apiUrl": "xxxx",
+    "model": "qwen3-omni-flash",
+    "maxTokens": 4000
+  }
+}
+```
+
+### Create Space Policy
+
+| Policy | Config Value | Description |
+|--------|--------------|-------------|
+| All Users | `all` | Any user can create new spaces |
+| Authenticated Only | `authenticated` | Only authenticated users can create new spaces |
+| Whitelist Mode | `whitelist` | Only users in the whitelist can create new spaces |
+| Disabled | `none` | Disable new space creation |
+
+Configuration example:
+```json
+{
+  "create_space": "all"
+}
+```
+
+Whitelist mode also requires configuring the user list:
+```json
+{
+  "create_space": "whitelist",
+  "whiteList": ["USER-han", "USER-EE", "USER-99"]
+}
+```
+
+## Complete Configuration Example
+
+```json
+{
+  "livekit": {
+    "key": "your-api-key",
+    "secret": "your-api-secret",
+    "url": "wss://your.server.name",
+    "turn": { "credential": "", "username": "", "urls": [] }
+  },
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "high",
+  "redis": { "enabled": true, "host": "localhost", "port": 6379, "password": "vocespace", "db": 0 },
+  "s3": {
+    "accessKey": "your-access-key",
+    "secretKey": "your-secret-key",
+    "bucket": "your-bucket-name",
+    "region": "us-east-2"
+  },
+  "serverUrl": "your.server.name",
+  "hostToken": "your-host-token",
+  "license": "your-license-token",
+  "ai": {
+    "enabled": true,
+    "apiKey": "your-ai-api-key",
+    "apiUrl": "your-ai-api-url",
+    "model": "qwen3-omni-flash",
+    "maxTokens": 4000
+  },
+  "create_space": "all",
+  "whiteList": ["USER-han", "USER-EE", "USER-99"]
+}
+```
+
+## Notes
+
+- Configuration changes take effect immediately without restarting the server
+- Keep your credentials secure and do not commit them to public code repositories
+- It is recommended to back up your current configuration before making changes

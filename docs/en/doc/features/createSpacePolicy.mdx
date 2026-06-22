@@ -1,0 +1,48 @@
+# Create Space Policy
+
+The Create Space Policy controls which users have permission to create new spaces.
+
+## Policy Options
+
+| Policy | Config Value | Description |
+|--------|--------------|-------------|
+| All Users | `all` | Any user can create new spaces |
+| Authenticated Only | `authenticated` | Only authenticated users can create new spaces |
+| Whitelist Mode | `whitelist` | Only users in the whitelist can create new spaces |
+| Disabled | `none` | Disable new space creation |
+
+## Configuration Methods
+
+### Via Dashboard Configuration
+
+1. Open the Dashboard's global configuration panel
+2. Find the "Create Space Policy" option
+3. Select the desired policy
+4. Configuration takes effect immediately without restarting the server
+
+### Via Configuration File
+
+Configure in `vocespace.conf.json`:
+
+```json
+{
+  "create_space": "all"
+}
+```
+
+## Whitelist Mode
+
+When selecting whitelist mode, you also need to configure the list of users allowed to create spaces:
+
+```json
+{
+  "create_space": "whitelist",
+  "whiteList": ["USER-han", "USER-EE", "USER-99"]
+}
+```
+
+In the Dashboard, you can enter user IDs line by line in the whitelist text box.
+
+## Quick Switch
+
+In the Dashboard home page action menu, you can quickly switch the create space policy without opening the full global configuration panel.

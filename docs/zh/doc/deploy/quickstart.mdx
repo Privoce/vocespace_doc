@@ -82,8 +82,8 @@ vocespace_deploy_zh.bat --skip-redis --skip-livekit
 ```json
 {
   "livekit": {
-    "key": "devkey",
-    "secret": "secret",
+    "key": "your-api-key",
+    "secret": "your-api-secret",
     "url": "wss://your.server.name" // modify ⚠️
   },
   "codec": "vp9",
@@ -98,9 +98,22 @@ vocespace_deploy_zh.bat --skip-redis --skip-livekit
     "password": "vocespace", 
     "db": 0 
   },
+  "s3": {
+    "accessKey": "your-access-key",
+    "secretKey": "your-secret-key",
+    "bucket": "your-bucket-name",
+    "region": "us-east-2"
+  },
   "serverUrl": "your.server.name", // modify ⚠️
-  "hostToken": "vocespace",
-  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E",
+  "hostToken": "your-host-token",
+  "license": "your-license-token",
+  "ai": {
+    "enabled": true,
+    "apiKey": "your-ai-api-key",
+    "apiUrl": "your-ai-api-url",
+    "model": "qwen3-omni-flash",
+    "maxTokens": 4000
+  },
   "create_space": "all",
   "whiteList": []
 }

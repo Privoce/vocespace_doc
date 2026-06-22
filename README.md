@@ -1,1 +1,2 @@
-# VoceSpace doc
+# VoceSpace documentation
+

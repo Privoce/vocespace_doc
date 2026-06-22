@@ -11,6 +11,11 @@
   },
   {
     "type": "dir",
+    "name": "features",
+    "label": "Функции"
+  },
+  {
+    "type": "dir",
     "name": "api",
     "label": "API"
   },

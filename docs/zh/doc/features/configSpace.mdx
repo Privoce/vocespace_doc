@@ -1,0 +1,145 @@
+# 全局配置
+
+全局配置面板用于管理 VoceSpace 的各项系统设置。
+
+![全局配置](/features/configSpace.png)
+
+## 访问全局配置
+
+在 Dashboard 首页的操作菜单中，点击"全局配置"即可打开配置面板。
+
+## 配置项说明
+
+### 音视频配置
+
+| 配置项 | 说明 | 可选值 |
+|--------|------|--------|
+| 编解码器 | 选择视频编码格式 | `vp9` / `vp8` / `h264` / `av1` |
+| 分辨率 | 设置视频分辨率 | `720p` / `1080p` / `4k` |
+| 最大码率 | 限制视频最大比特率，影响画质和带宽 | 数值，如 `3000000` |
+| 最大帧率 | 设置视频最大帧率 | 数值，如 `30` |
+| 优先级 | 网络拥塞时的传输优先级 | `high` / `medium` / `low` |
+
+配置示例：
+```json
+{
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "high"
+}
+```
+
+### TURN 服务器配置
+
+| 配置项 | 说明 |
+|--------|------|
+| URLs | TURN 服务器地址数组 |
+| 用户名 | TURN 服务器认证用户名 |
+| 密码 | TURN 服务器认证密码 |
+
+配置示例：
+```json
+{
+  "livekit": {
+    "turn": {
+      "urls": ["turn:your-turn-server.com:3478"],
+      "username": "your-username",
+      "credential": "your-password"
+    }
+  }
+}
+```
+
+> TURN 服务器用于在 NAT/防火墙环境下建立 P2P 连接。
+
+### AI 配置
+
+| 配置项 | 说明 | 示例值 |
+|--------|------|--------|
+| 启用 | 是否启用 AI 功能 | `true` / `false` |
+| API Key | AI 服务的访问密钥 | `xxxx` |
+| API URL | AI 服务的接口地址 | `xxxx` |
+| 模型 | 使用的 AI 模型名称 | `qwen3-omni-flash` |
+| 最大 Token 数 | AI 分析的最大输出长度 | `4000` |
+
+配置示例：
+```json
+{
+  "ai": {
+    "enabled": true,
+    "apiKey": "xxxx",
+    "apiUrl": "xxxx",
+    "model": "qwen3-omni-flash",
+    "maxTokens": 4000
+  }
+}
+```
+
+### 创建空间策略
+
+| 策略 | 配置值 | 说明 |
+|------|--------|------|
+| 所有人可创建 | `all` | 任何用户都可以创建新空间 |
+| 仅认证用户 | `authenticated` | 只有认证用户才能创建新空间 |
+| 白名单模式 | `whitelist` | 只有白名单中的用户才能创建新空间 |
+| 禁止创建 | `none` | 关闭新空间创建功能 |
+
+配置示例：
+```json
+{
+  "create_space": "all"
+}
+```
+
+白名单模式还需要配置用户列表：
+```json
+{
+  "create_space": "whitelist",
+  "whiteList": ["USER-han", "USER-EE", "USER-99"]
+}
+```
+
+## 完整配置示例
+
+```json
+{
+  "livekit": {
+    "key": "your-api-key",
+    "secret": "your-api-secret",
+    "url": "wss://your.server.name",
+    "turn": { "credential": "", "username": "", "urls": [] }
+  },
+  "codec": "vp9",
+  "resolution": "1080p",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "high",
+  "redis": { "enabled": true, "host": "localhost", "port": 6379, "password": "vocespace", "db": 0 },
+  "s3": {
+    "accessKey": "your-access-key",
+    "secretKey": "your-secret-key",
+    "bucket": "your-bucket-name",
+    "region": "us-east-2"
+  },
+  "serverUrl": "your.server.name",
+  "hostToken": "your-host-token",
+  "license": "your-license-token",
+  "ai": {
+    "enabled": true,
+    "apiKey": "your-ai-api-key",
+    "apiUrl": "your-ai-api-url",
+    "model": "qwen3-omni-flash",
+    "maxTokens": 4000
+  },
+  "create_space": "all",
+  "whiteList": ["USER-han", "USER-EE", "USER-99"]
+}
+```
+
+## 注意事项
+
+- 配置修改后立即生效，无需重启服务器
+- 请妥善保管密钥信息，不要将其提交到公开的代码仓库中
+- 修改配置前建议备份当前配置
